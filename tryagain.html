@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menstrual Cycle Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        input, button, select {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #ff69b4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #ff1493;
+        }
+        .sync-btn {
+            background-color: #17a2b8 !important;
+        }
+        .sync-btn:hover {
+            background-color: #138496 !important;
+        }
+        .result {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        .hidden {
+            display: none;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+        }
+        .step.active {
+            background: #ff69b4;
+            color: white;
+        }
+        .sync-section {
+            margin: 15px 0;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌺 Menstrual Cycle Tracker 🌺</h1>
+        
+        <!-- Step 1: Authentication -->
+        <div class="section" id="authSection">
+            <div class="step-indicator">
+                <div class="step active">1</div>
+                <div class="step">2</div>
+            </div>
+            
+            <h2>Welcome! Please Login or Register</h2>
+            
+            <!-- Sync Section - Added at the top -->
+            <div class="sync-section">
+                <h4 style="margin: 0 0 10px 0; color: #155724;">🔁 Sync Data Between Devices</h4>
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f5132;">
+                    <small>Already have data from another device? Import it here!</small>
+                </p>
+                <button onclick="promptForImport()" class="sync-btn">
+                    📥 Import Data from Another Device
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="showRegister()">Register</button>
+                <button onclick="showLogin()">Login</button>
+            </div>
+            
+            <!-- Registration Form - Step 1 -->
+            <div id="registerForm" class="hidden">
+                <h3>Step 1: Create Account</h3>
+                <input type="text" id="regPersonalID" placeholder="Personal ID (e.g., User@123)" style="width: 300px;">
+                <br>
+                <input type="password" id="regPassword" placeholder="Password" style="width: 300px;">
+                <br><br>
+                <button onclick="registerStep1()">Next: Enter Cycle Info</button>
+                <div id="registerResult" class="result"></div>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm" class="hidden">
+                <h3>Login to Your Account</h3>
+                <input type="text" id="loginPersonalID" placeholder="Personal ID" style="width: 300px;">
+                <input type="password" id="loginPassword" placeholder="Password">
+                <br>
+                <button onclick="loginUser()">Login</button>
+                <div id="loginResult" class="result"></div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Cycle Information (for new users only) -->
+        <div class="section hidden" id="cycleInfoSection">
+            <div class="step-indicator">
+                <div class="step">1</div>
+                <div class="step active">2</div>
+            </div>
+            
+            <h2>Almost Done! Set Up Your Cycle Information</h2>
+            <div style="background: #f8f8f8; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h3>Last Menstrual Period:</h3>
+                <div style="margin: 10px 0;">
+                    <input type="number" id="regDay" placeholder="Start Day (1-31)" min="1" max="31" style="width: 140px;">
+                    <input type="number" id="regMonth" placeholder="Start Month (1-12)" min="1" max="12" style="width: 140px;">
+                </div>
+                <div style="margin: 10px 0;">
+                    <input type="number" id="regCycle" placeholder="Cycle Length (21-35 days)" min="21" max="35" style="width: 200px;">
+                </div>
+            </div>
+            
+            <button onclick="completeRegistration()">Complete Registration</button>
+            <button onclick="backToAuth()" style="background: #666;">Back</button>
+            <div id="cycleInfoResult" class="result"></div>
+        </div>
+        
+        <!-- Tracker Section (shown after login/registration) -->
+        <div class="section hidden" id="trackerSection">
+            <h2>Your Cycle Tracker</h2>
+            
+            <!-- Export Section in Tracker -->
+            <div class="sync-section">
+                <h4 style="margin: 0 0 10px 0; color: #155724;">📤 Export Data to Another Device</h4>
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f5132;">
+                    <small>Copy this data to use on another device</small>
+                </p>
+                <button onclick="exportUserData()" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+                    📤 Export My Data
+                </button>
+            </div>
+            
+            <div>
+                <h3>Select Today's Symptoms</h3>
+                <div id="symptomsList"></div>
+                <br>
+                <input type="text" id="symptomInput" placeholder="Enter symptom numbers (e.g., 1,3,5) or 13 for 'Everything is fine'" style="width: 400px;">
+                <br>
+                <label>
+                    <input type="checkbox" id="showMoreInfo"> Show detailed information
+                </label>
+                <br>
+                <button onclick="runTracker()">Update Tracker</button>
+                <button onclick="logout()">Logout</button>
+            </div>
+            <div id="trackerResult" class="result"></div>
+        </div>
+    </div>
+
+    <script src="tryagain.js"></script>
+    <script>
+        // Global variables
+        let currentUser = null;
+        let userDay = null;
+        let userMonth = null;
+        let userCycle = null;
+        let tempPersonalID = null;
+        let tempPassword = null;
+
+        // Enhanced storage functions
+        function saveUserData(personalID, password, day, month, cycle) {
+            const userData = {
+                password: password,
+                day: day,
+                month: month,
+                cycle: cycle,
+                lastLogin: new Date().toISOString(),
+                symptomsHistory: []
+            };
+            
+            // Get all existing users
+            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+            
+            // Add/update this user
+            allUsers[personalID] = userData;
+            
+            // Save back to localStorage
+            localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
+            
+            console.log('User data saved for:', personalID);
+        }
+
+        function loadUserData(personalID, password) {
+            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+            const userData = allUsers[personalID];
+            
+            if (userData && userData.password === password) {
+                // Update last login time
+                userData.lastLogin = new Date().toISOString();
+                allUsers[personalID] = userData;
+                localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
+                
+                return {
+                    success: true,
+                    data: {
+                        day: userData.day,
+                        month: userData.month,
+                        cycle: userData.cycle
+                    }
+                };
+            }
+            
+            return { success: false, error: 'Invalid credentials' };
+        }
+
+        function userExists(personalID) {
+            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+            return !!allUsers[personalID];
+        }
+
+        function saveSymptoms(personalID, symptoms) {
+            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+            const userData = allUsers[personalID];
+            
+            if (userData) {
+                userData.symptomsHistory.push({
+                    date: new Date().toISOString().split('T')[0],
+                    symptoms: symptoms
+                });
+                
+                allUsers[personalID] = userData;
+                localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
+            }
+        }
+
+        // Wait for WebAssembly to initialize
+        Module.onRuntimeInitialized = function() {
+            console.log('WebAssembly module loaded and ready!');
+            document.getElementById('authSection').classList.remove('hidden');
+        };
+
+        // Show registration form
+        function showRegister() {
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerResult').textContent = '';
+        }
+
+        // Show login form
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginResult').textContent = '';
+        }
+
+        // Step 1: Register (just credentials)
+        function registerStep1() {
+            const personalID = document.getElementById('regPersonalID').value;
+            const password = document.getElementById('regPassword').value;
+
+            if (!personalID || !password) {
+                document.getElementById('registerResult').textContent = 'Please enter both Personal ID and Password';
+                return;
+            }
+
+            // Check Personal ID format
+            if (!personalID.includes('@') || !/[A-Z]/.test(personalID) || !/\d/.test(personalID)) {
+                document.getElementById('registerResult').textContent = 'Personal ID must contain @, a capital letter, and a number';
+                return;
+            }
+
+            // Check if user already exists
+            if (userExists(personalID)) {
+                document.getElementById('registerResult').textContent = 'This Personal ID is already registered. Please login instead.';
+                return;
+            }
+
+            // Store temp credentials and proceed to step 2
+            window.tempPersonalID = personalID;
+            window.tempPassword = password;
+            
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('cycleInfoSection').classList.remove('hidden');
+            document.getElementById('registerResult').textContent = '';
+        }
+
+        // Step 2: Complete registration with cycle info
+        function completeRegistration() {
+            const day = parseInt(document.getElementById('regDay').value);
+            const month = parseInt(document.getElementById('regMonth').value);
+            const cycle = parseInt(document.getElementById('regCycle').value);
+
+            if (!day || !month || !cycle) {
+                document.getElementById('cycleInfoResult').textContent = 'Please fill all cycle information fields';
+                return;
+            }
+
+            if (day < 1 || day > 31) {
+                document.getElementById('cycleInfoResult').textContent = 'Please enter a valid day (1-31)';
+                return;
+            }
+
+            if (month < 1 || month > 12) {
+                document.getElementById('cycleInfoResult').textContent = 'Please enter a valid month (1-12)';
+                return;
+            }
+
+            if (cycle < 21 || cycle > 35) {
+                document.getElementById('cycleInfoResult').textContent = 'Cycle length must be between 21-35 days';
+                return;
+            }
+
+            try {
+                // Save user data to localStorage
+                saveUserData(window.tempPersonalID, window.tempPassword, day, month, cycle);
+                
+                document.getElementById('cycleInfoResult').textContent = '✅ Registration successful!';
+                
+                // Auto-login after successful registration
+                currentUser = window.tempPersonalID;
+                userDay = day;
+                userMonth = month;
+                userCycle = cycle;
+                
+                // Wait a moment then show tracker
+                setTimeout(() => {
+                    showTracker();
+                }, 1000);
+                
+            } catch (error) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Registration error: ' + error.message;
+            }
+        }
+
+        // Login user
+        function loginUser() {
+            const personalID = document.getElementById('loginPersonalID').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!personalID || !password) {
+                document.getElementById('loginResult').textContent = 'Please enter Personal ID and password';
+                return;
+            }
+
+            try {
+                const result = loadUserData(personalID, password);
+                
+                if (result.success) {
+                    document.getElementById('loginResult').textContent = '✅ Login successful!';
+                    
+                    currentUser = personalID;
+                    userDay = result.data.day;
+                    userMonth = result.data.month;
+                    userCycle = result.data.cycle;
+                    
+                    // Wait a moment then show tracker
+                    setTimeout(() => {
+                        showTracker();
+                    }, 1000);
+                    
+                } else {
+                    document.getElementById('loginResult').textContent = '❌ ' + result.error;
+                }
+            } catch (error) {
+                document.getElementById('loginResult').textContent = '❌ Login error: ' + error.message;
+            }
+        }
+
+        // Back to authentication step
+        function backToAuth() {
+            document.getElementById('cycleInfoSection').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('cycleInfoResult').textContent = '';
+        }
+
+        // Show tracker section
+        function showTracker() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('cycleInfoSection').classList.add('hidden');
+            document.getElementById('trackerSection').classList.remove('hidden');
+            
+            // Show welcome message
+            document.getElementById('trackerResult').textContent = `Welcome back, ${currentUser}! Loading your cycle information...`;
+            
+            // Populate symptoms list
+            const symptoms = [
+                "1. Cramps", "2. Tender breasts", "3. Fatigue", "4. Bloating",
+                "5. Headache", "6. Acne", "7. Backache", "8. Nausea",
+                "9. Cravings", "10. Insomnia", "11. Constipation", "12. Diarrhea",
+                "13. Everything is fine"
+            ];
+            
+            document.getElementById('symptomsList').innerHTML = symptoms.join('<br>');
+            
+            // Run initial tracker
+            runTracker();
+        }
+
+        // Run the menstrual tracker
+        function runTracker() {
+            if (!currentUser) return;
+
+            const symptomInput = document.getElementById('symptomInput').value;
+            const showMoreInfo = document.getElementById('showMoreInfo').checked ? 1 : 0;
+
+            try {
+                // Use WebAssembly for cycle calculations
+                const result = Module.ccall('wasm_run_tracker', 'string', 
+                    ['number', 'number', 'number', 'string', 'string', 'number'], 
+                    [userDay, userMonth, userCycle, currentUser, symptomInput, showMoreInfo]);
+                
+                document.getElementById('trackerResult').textContent = result;
+                
+                // Save symptoms to localStorage if any were entered
+                if (symptomInput && symptomInput !== '13') {
+                    try {
+                        saveSymptoms(currentUser, symptomInput);
+                    } catch (error) {
+                        console.log('Failed to save symptoms:', error);
+                    }
+                }
+            } catch (error) {
+                document.getElementById('trackerResult').textContent = 'Error: ' + error;
+            }
+        }
+
+        // Logout
+        function logout() {
+            currentUser = null;
+            userDay = null;
+            userMonth = null;
+            userCycle = null;
+            window.tempPersonalID = null;
+            window.tempPassword = null;
+            
+            document.getElementById('trackerSection').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            
+            // Clear all fields
+            document.getElementById('regPersonalID').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regDay').value = '';
+            document.getElementById('regMonth').value = '';
+            document.getElementById('regCycle').value = '';
+            document.getElementById('loginPersonalID').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('symptomInput').value = '';
+            document.getElementById('trackerResult').textContent = '';
+            document.getElementById('registerResult').textContent = '';
+            document.getElementById('loginResult').textContent = '';
+            document.getElementById('cycleInfoResult').textContent = '';
+        }
+
+        // === SYNC FUNCTIONS ===
+        function exportUserData() {
+            const allUsers = localStorage.getItem('menstrualTrackerUsers');
+            if (!allUsers) {
+                alert('No data found to export!');
+                return;
+            }
+            
+            const blob = new Blob([allUsers], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'menstrual-tracker-backup.json';
+            a.click();
+            
+            // Also show data as text for easy copying
+            prompt('📋 Copy this data to sync with other devices:', allUsers);
+        }
+
+        function importUserData(jsonData) {
+            try {
+                const users = JSON.parse(jsonData);
+                localStorage.setItem('menstrualTrackerUsers', JSON.stringify(users));
+                alert('✅ Data imported successfully! Please refresh the page to login with your existing accounts.');
+            } catch (error) {
+                alert('❌ Invalid data format. Please check the copied data.');
+            }
+        }
+
+        function promptForImport() {
+            const jsonData = prompt('📥 Paste the exported data from your other device:');
+            if (jsonData) {
+                importUserData(jsonData);
+            }
+        }
+    </script>
+</body>
+</html>
