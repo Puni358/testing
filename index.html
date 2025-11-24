@@ -81,6 +81,23 @@
             border-radius: 8px;
             border: 1px solid #c3e6cb;
         }
+        .requirements-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .requirement-item {
+            margin: 3px 0;
+        }
+        .compact-instruction {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+            line-height: 1.3;
+        }
     </style>
 </head>
 <body>
@@ -115,7 +132,18 @@
             <!-- Registration Form - Step 1 -->
             <div id="registerForm" class="hidden">
                 <h3>Step 1: Create Account</h3>
-                <input type="text" id="regPersonalID" placeholder="Personal ID (e.g., User@123)" style="width: 300px;">
+                
+                <!-- Compact Requirements Box -->
+                <div class="requirements-box">
+                    <strong>Personal ID Requirements:</strong>
+                    <div class="requirement-item">✓ Min 4 characters</div>
+                    <div class="requirement-item">✓ A-Z, a-z, 0-9</div>
+                    <div class="requirement-item">✓ Special: !@#$%^&*</div>
+                    <div class="requirement-item">✓ Example: User@123</div>
+                </div>
+                
+                <input type="text" id="regPersonalID" placeholder="Enter Personal ID" style="width: 300px;">
+                <div class="compact-instruction">Must include capital, small letter, number & special character</div>
                 <br>
                 <input type="password" id="regPassword" placeholder="Password" style="width: 300px;">
                 <br><br>
@@ -266,6 +294,56 @@
             }
         }
 
+        // Enhanced Personal ID validation function
+        function validatePersonalID(personalID) {
+            // Check minimum length
+            if (personalID.length < 4) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must be at least 4 characters long'
+                };
+            }
+
+            // Check for at least one capital letter
+            if (!/[A-Z]/.test(personalID)) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must contain at least one capital letter (A-Z)'
+                };
+            }
+
+            // Check for at least one small letter
+            if (!/[a-z]/.test(personalID)) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must contain at least one small letter (a-z)'
+                };
+            }
+
+            // Check for at least one number
+            if (!/\d/.test(personalID)) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must contain at least one number (0-9)'
+                };
+            }
+
+            // Check for at least one special character from the allowed list
+            const allowedSpecialChars = /[!@#$%^&*]/;
+            if (!allowedSpecialChars.test(personalID)) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must contain at least one special character (!, @, #, $, %, ^, &, *)'
+                };
+            }
+
+            // All conditions passed
+            return {
+                isValid: true,
+                message: 'Personal ID is valid'
+            };
+        }
+
         // Wait for WebAssembly to initialize
         Module.onRuntimeInitialized = function() {
             console.log('WebAssembly module loaded and ready!');
@@ -296,9 +374,10 @@
                 return;
             }
 
-            // Check Personal ID format
-            if (!personalID.includes('@') || !/[A-Z]/.test(personalID) || !/\d/.test(personalID)) {
-                document.getElementById('registerResult').textContent = 'Personal ID must contain @, a capital letter, and a number';
+            // Enhanced Personal ID validation
+            const validationResult = validatePersonalID(personalID);
+            if (!validationResult.isValid) {
+                document.getElementById('registerResult').textContent = validationResult.message;
                 return;
             }
 
