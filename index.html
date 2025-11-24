@@ -98,6 +98,42 @@
             margin-top: 5px;
             line-height: 1.3;
         }
+        .symptom-button {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 120px;
+        }
+        .symptom-button:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        .symptom-button.selected {
+            background-color: #ff69b4;
+            color: white;
+            border-color: #ff1493;
+        }
+        .symptoms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .continue-btn {
+            background-color: #28a745;
+            padding: 12px 30px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .continue-btn:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
 <body>
@@ -109,6 +145,7 @@
             <div class="step-indicator">
                 <div class="step active">1</div>
                 <div class="step">2</div>
+                <div class="step">3</div>
             </div>
             
             <h2>Welcome! Please Login or Register</h2>
@@ -167,6 +204,7 @@
             <div class="step-indicator">
                 <div class="step">1</div>
                 <div class="step active">2</div>
+                <div class="step">3</div>
             </div>
             
             <h2>Almost Done! Set Up Your Cycle Information</h2>
@@ -186,11 +224,37 @@
             <div id="cycleInfoResult" class="result"></div>
         </div>
         
-        <!-- Tracker Section (shown after login/registration) -->
-        <div class="section hidden" id="trackerSection">
-            <h2>Your Cycle Tracker</h2>
+        <!-- Step 2.5: Symptoms Selection Page -->
+        <div class="section hidden" id="symptomsSection">
+            <div class="step-indicator">
+                <div class="step">1</div>
+                <div class="step">2</div>
+                <div class="step active">3</div>
+            </div>
             
-            <!-- Export Section in Tracker -->
+            <h2>Select Today's Symptoms</h2>
+            <p>Click on the symptoms you're experiencing today:</p>
+            
+            <div class="symptoms-grid" id="symptomsButtons">
+                <!-- Symptoms buttons will be generated here -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="goToResults()" class="continue-btn">Continue to Results</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Results Page -->
+        <div class="section hidden" id="resultsSection">
+            <div class="step-indicator">
+                <div class="step">1</div>
+                <div class="step">2</div>
+                <div class="step active">3</div>
+            </div>
+            
+            <h2>Your Cycle Analysis</h2>
+            
+            <!-- Export Section in Results -->
             <div class="sync-section">
                 <h4 style="margin: 0 0 10px 0; color: #155724;">📤 Export Data to Another Device</h4>
                 <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f5132;">
@@ -201,20 +265,17 @@
                 </button>
             </div>
             
-            <div>
-                <h3>Select Today's Symptoms</h3>
-                <div id="symptomsList"></div>
-                <br>
-                <input type="text" id="symptomInput" placeholder="Enter symptom numbers (e.g., 1,3,5) or 13 for 'Everything is fine'" style="width: 400px;">
-                <br>
+            <div style="margin: 20px 0;">
                 <label>
                     <input type="checkbox" id="showMoreInfo"> Show detailed information
                 </label>
-                <br>
-                <button onclick="runTracker()">Update Tracker</button>
+                <br><br>
+                <button onclick="showDetailedResults()">Update Results</button>
+                <button onclick="backToSymptoms()" style="background: #666;">Back to Symptoms</button>
                 <button onclick="logout()">Logout</button>
             </div>
-            <div id="trackerResult" class="result"></div>
+            
+            <div id="resultsOutput" class="result"></div>
         </div>
     </div>
 
@@ -227,6 +288,7 @@
         let userCycle = null;
         let tempPersonalID = null;
         let tempPassword = null;
+        let selectedSymptoms = [];
 
         // Enhanced storage functions
         function saveUserData(personalID, password, day, month, cycle) {
@@ -434,9 +496,9 @@
                 userMonth = month;
                 userCycle = cycle;
                 
-                // Wait a moment then show tracker
+                // Wait a moment then show symptoms selection
                 setTimeout(() => {
-                    showTracker();
+                    showSymptomsSelection();
                 }, 1000);
                 
             } catch (error) {
@@ -465,9 +527,9 @@
                     userMonth = result.data.month;
                     userCycle = result.data.cycle;
                     
-                    // Wait a moment then show tracker
+                    // Wait a moment then show symptoms selection
                     setTimeout(() => {
-                        showTracker();
+                        showSymptomsSelection();
                     }, 1000);
                     
                 } else {
@@ -486,34 +548,104 @@
             document.getElementById('cycleInfoResult').textContent = '';
         }
 
-        // Show tracker section
-        function showTracker() {
+        // Show symptoms selection section
+        function showSymptomsSelection() {
             document.getElementById('authSection').classList.add('hidden');
             document.getElementById('cycleInfoSection').classList.add('hidden');
-            document.getElementById('trackerSection').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('symptomsSection').classList.remove('hidden');
             
-            // Show welcome message
-            document.getElementById('trackerResult').textContent = `Welcome back, ${currentUser}! Loading your cycle information...`;
+            // Clear previous selections
+            selectedSymptoms = [];
             
-            // Populate symptoms list
+            // Create symptom buttons
             const symptoms = [
-                "1. Cramps", "2. Tender breasts", "3. Fatigue", "4. Bloating",
-                "5. Headache", "6. Acne", "7. Backache", "8. Nausea",
-                "9. Cravings", "10. Insomnia", "11. Constipation", "12. Diarrhea",
-                "13. Everything is fine"
+                { id: 1, name: "Cramps" },
+                { id: 2, name: "Tender breasts" },
+                { id: 3, name: "Fatigue" },
+                { id: 4, name: "Bloating" },
+                { id: 5, name: "Headache" },
+                { id: 6, name: "Acne" },
+                { id: 7, name: "Backache" },
+                { id: 8, name: "Nausea" },
+                { id: 9, name: "Cravings" },
+                { id: 10, name: "Insomnia" },
+                { id: 11, name: "Constipation" },
+                { id: 12, name: "Diarrhea" },
+                { id: 13, name: "Everything is fine" }
             ];
             
-            document.getElementById('symptomsList').innerHTML = symptoms.join('<br>');
+            const symptomsContainer = document.getElementById('symptomsButtons');
+            symptomsContainer.innerHTML = '';
             
-            // Run initial tracker
-            runTracker();
+            symptoms.forEach(symptom => {
+                const button = document.createElement('div');
+                button.className = 'symptom-button';
+                button.textContent = symptom.name;
+                button.onclick = () => toggleSymptom(symptom.id, button);
+                symptomsContainer.appendChild(button);
+            });
         }
 
-        // Run the menstrual tracker
-        function runTracker() {
+        // Toggle symptom selection
+        function toggleSymptom(symptomId, buttonElement) {
+            if (symptomId === 13) {
+                // "Everything is fine" selected - clear all others
+                selectedSymptoms = [13];
+                // Update all buttons
+                document.querySelectorAll('.symptom-button').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                buttonElement.classList.add('selected');
+            } else {
+                // Remove "Everything is fine" if it was selected
+                const everythingIndex = selectedSymptoms.indexOf(13);
+                if (everythingIndex > -1) {
+                    selectedSymptoms.splice(everythingIndex, 1);
+                    document.querySelectorAll('.symptom-button').forEach(btn => {
+                        if (btn.textContent === "Everything is fine") {
+                            btn.classList.remove('selected');
+                        }
+                    });
+                }
+                
+                // Toggle the current symptom
+                const index = selectedSymptoms.indexOf(symptomId);
+                if (index > -1) {
+                    selectedSymptoms.splice(index, 1);
+                    buttonElement.classList.remove('selected');
+                } else {
+                    selectedSymptoms.push(symptomId);
+                    buttonElement.classList.add('selected');
+                }
+            }
+        }
+
+        // Go to results page
+        function goToResults() {
+            if (selectedSymptoms.length === 0) {
+                alert('Please select at least one symptom or "Everything is fine"');
+                return;
+            }
+            
+            document.getElementById('symptomsSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            
+            // Show initial results
+            showDetailedResults();
+        }
+
+        // Back to symptoms selection
+        function backToSymptoms() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('symptomsSection').classList.remove('hidden');
+        }
+
+        // Show detailed results
+        function showDetailedResults() {
             if (!currentUser) return;
 
-            const symptomInput = document.getElementById('symptomInput').value;
+            const symptomInput = selectedSymptoms.join(',');
             const showMoreInfo = document.getElementById('showMoreInfo').checked ? 1 : 0;
 
             try {
@@ -522,9 +654,9 @@
                     ['number', 'number', 'number', 'string', 'string', 'number'], 
                     [userDay, userMonth, userCycle, currentUser, symptomInput, showMoreInfo]);
                 
-                document.getElementById('trackerResult').textContent = result;
+                document.getElementById('resultsOutput').textContent = result;
                 
-                // Save symptoms to localStorage if any were entered
+                // Save symptoms to localStorage if any were entered (except "Everything is fine")
                 if (symptomInput && symptomInput !== '13') {
                     try {
                         saveSymptoms(currentUser, symptomInput);
@@ -533,7 +665,7 @@
                     }
                 }
             } catch (error) {
-                document.getElementById('trackerResult').textContent = 'Error: ' + error;
+                document.getElementById('resultsOutput').textContent = 'Error: ' + error;
             }
         }
 
@@ -545,8 +677,10 @@
             userCycle = null;
             window.tempPersonalID = null;
             window.tempPassword = null;
+            selectedSymptoms = [];
             
-            document.getElementById('trackerSection').classList.add('hidden');
+            document.getElementById('symptomsSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
             document.getElementById('authSection').classList.remove('hidden');
             
             // Clear all fields
@@ -557,8 +691,7 @@
             document.getElementById('regCycle').value = '';
             document.getElementById('loginPersonalID').value = '';
             document.getElementById('loginPassword').value = '';
-            document.getElementById('symptomInput').value = '';
-            document.getElementById('trackerResult').textContent = '';
+            document.getElementById('resultsOutput').textContent = '';
             document.getElementById('registerResult').textContent = '';
             document.getElementById('loginResult').textContent = '';
             document.getElementById('cycleInfoResult').textContent = '';
