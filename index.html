@@ -305,15 +305,25 @@
             <h2>Welcome! Please Login or Register</h2>
             
             <!-- Sync Section - Added at the top -->
-            <div class="sync-section">
-                <h4 style="margin: 0 0 10px 0; color: #155724;">🔁 Sync Data Between Devices</h4>
-                <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f5132;">
-                    <small>Already have data from another device? Import it here!</small>
-                </p>
-                <button onclick="promptForImport()" class="sync-btn">
-                    📥 Import Data from Another Device
-                </button>
-            </div>
+            <!-- Replace the existing sync section with this: -->
+<!-- Replace the sync section with this: -->
+<div class="sync-section">
+    <h4 style="margin: 0 0 10px 0; color: #155724;">🔁 Sync Data Between Devices</h4>
+    <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f5132;">
+        <small>Already have data from another device? Import it here!</small>
+    </p>
+    <div>
+        <button onclick="exportUserData()" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin: 2px;">
+            📤 Export My Data
+        </button>
+        
+        <button onclick="importFromFile()" class="sync-btn" style="margin: 2px;">
+            📁 Import File
+        </button>
+        
+
+    </div>
+</div>
             
             <div style="margin-top: 20px;">
                 <button onclick="showRegister()">Register</button>
@@ -1762,43 +1772,181 @@
             
             return additionalInfoHTML;
         }
-
+        // Test function to create sample data for testing
+        function createTestUser() {
+        const testUsers = {
+        "Test@123": {
+            password: "test123",
+            day: 15,
+            month: 11,
+            cycle: 28,
+            lastLogin: new Date().toISOString(),
+            symptomsHistory: [
+                {
+                    date: new Date().toISOString().split('T')[0],
+                    symptoms: "1,3,5"
+                }
+            ]
+        }
+        };
+    
+        localStorage.setItem('menstrualTrackerUsers', JSON.stringify(testUsers));
+        alert('✅ Test user created! Username: Test@123, Password: test123');
+        }
         // === SYNC FUNCTIONS ===
-        function exportUserData() {
-            const allUsers = localStorage.getItem('menstrualTrackerUsers');
-            if (!allUsers) {
-                alert('No data found to export!');
-                return;
-            }
-            
-            const blob = new Blob([allUsers], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'menstrual-tracker-backup.json';
-            a.click();
-            
-            // Also show data as text for easy copying
-            prompt('📋 Copy this data to sync with other devices:', allUsers);
+        // === SYNC FUNCTIONS ===
+        // === SIMPLE & RELIABLE SYNC FUNCTIONS ===
+function exportUserData() {
+    try {
+        const allUsers = localStorage.getItem('menstrualTrackerUsers');
+        if (!allUsers || allUsers === '{}') {
+            alert('No user data found to export!');
+            return;
         }
+        
+        // Create a clean, simple version for export
+        const usersObj = JSON.parse(allUsers);
+        const exportData = {
+            exportedAt: new Date().toISOString(),
+            version: "1.0",
+            users: usersObj
+        };
+        
+        const jsonString = JSON.stringify(exportData, null, 2);
+        
+        // Create download
+        const blob = new Blob([jsonString], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'menstrual-tracker-backup.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Also show in alert for easy copying
+        setTimeout(() => {
+            alert('✅ Data exported successfully!\n\nA backup file has been downloaded.\n');
+            //prompt('Copy this backup code:', jsonString);
+        }, 500);
+        
+    } catch (error) {
+        alert('❌ Error exporting data: ' + error.message);
+    }
+}
 
-        function importUserData(jsonData) {
-            try {
-                const users = JSON.parse(jsonData);
-                localStorage.setItem('menstrualTrackerUsers', JSON.stringify(users));
-                alert('✅ Data imported successfully! Please refresh the page to login with your existing accounts.');
-            } catch (error) {
-                alert('❌ Invalid data format. Please check the copied data.');
-            }
+function importUserData(jsonData) {
+    if (!jsonData || jsonData.trim() === '') {
+        alert('❌ Please paste valid data to import');
+        return;
+    }
+    
+    try {
+        let importedData;
+        
+        // Try to parse as simple backup format first
+        try {
+            importedData = JSON.parse(jsonData);
+        } catch (e) {
+            // If that fails, try to parse as raw localStorage data
+            importedData = { users: JSON.parse(jsonData) };
         }
+        
+        // Handle both formats
+        const usersData = importedData.users || importedData;
+        
+        if (!usersData || typeof usersData !== 'object') {
+            throw new Error('No valid user data found');
+        }
+        
+        // Basic validation
+        const userCount = Object.keys(usersData).length;
+        if (userCount === 0) {
+            throw new Error('No users found in imported data');
+        }
+        
+        console.log('Importing users:', Object.keys(usersData));
+        
+        // Clear existing data and import
+        localStorage.setItem('menstrualTrackerUsers', JSON.stringify(usersData));
+        
+        alert(`✅ Data imported successfully! ${userCount} user(s) loaded.\n\nPlease refresh the page to login.`);
+        
+    } catch (error) {
+        console.error('Import error:', error);
+        alert('❌ Failed to import data:\n' + error.message + '\n\nMake sure you are importing valid backup data.');
+    }
+}
 
-        function promptForImport() {
-            const jsonData = prompt('📥 Paste the exported data from your other device:');
-            if (jsonData) {
-                importUserData(jsonData);
-            }
+//function promptForImport() {
+    //const jsonData = prompt(
+        //'📥 Paste your backup data here:\n\n1. Copy ALL text from your backup file\n2. Paste it in this box\n3. Click OK',
+        //''
+    //);
+    
+    //if (jsonData) {
+        importUserData(jsonData);
+    //}
+//}
+
+function importFromFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,text/json';
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                importUserData(e.target.result);
+            };
+            reader.onerror = function() {
+                alert('❌ Error reading file. Please try again.');
+            };
+            reader.readAsText(file);
         }
+    };
+    input.click();
+}
+
+// DEBUG: Function to check and fix current data
+function debugAndFixData() {
+    try {
+        const allUsers = localStorage.getItem('menstrualTrackerUsers');
+        if (!allUsers) {
+            alert('No data found in storage');
+            return;
+        }
+        
+        const users = JSON.parse(allUsers);
+        console.log('Current users:', Object.keys(users));
+        
+        // Fix any potential issues in current data
+        for (const username in users) {
+            const user = users[username];
+            
+            // Ensure all required fields exist
+            if (!user.password) user.password = 'default';
+            if (!user.day) user.day = 1;
+            if (!user.month) user.month = 1;
+            if (!user.cycle) user.cycle = 28;
+            if (!user.lastLogin) user.lastLogin = new Date().toISOString();
+            if (!user.symptomsHistory) user.symptomsHistory = [];
+            
+            // Clean symptoms history (remove any invalid entries)
+            user.symptomsHistory = user.symptomsHistory.filter(entry => 
+                entry && entry.date && typeof entry.symptoms !== 'undefined'
+            );
+        }
+        
+        localStorage.setItem('menstrualTrackerUsers', JSON.stringify(users));
+        alert('✅ Data checked and fixed! Try exporting again.');
+        
+    } catch (error) {
+        alert('❌ Error in current data: ' + error.message);
+    }
+}
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
