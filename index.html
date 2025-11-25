@@ -1070,26 +1070,34 @@
         }
 
         // Go to results page
+        // Go to results page - FIXED: Properly handles "Everything is fine" selection
         function goToResults() {
-            if (selectedSymptoms.length === 0) {
-                alert('Please select at least one symptom or "Everything is fine"');
-                return;
+        if (selectedSymptoms.length === 0) {
+        alert('Please select at least one symptom or "Everything is fine"');
+        return;
+        }
+    
+        document.getElementById('symptomsSection').classList.add('hidden');
+        document.getElementById('resultsSection').classList.remove('hidden');
+    
+    // Save symptoms - FIXED: Now properly handles "Everything is fine"
+        if (selectedSymptoms.length > 0) {
+        try {
+            // If "Everything is fine" is selected, save it as "13"
+            // This will overwrite any previous symptoms for today
+            if (selectedSymptoms.includes(13)) {
+                saveSymptoms(currentUser, "13");
+            } else {
+                // Save regular symptoms
+                saveSymptoms(currentUser, selectedSymptoms.join(','));
             }
-            
-            document.getElementById('symptomsSection').classList.add('hidden');
-            document.getElementById('resultsSection').classList.remove('hidden');
-            
-            // Save symptoms if any were entered (except "Everything is fine")
-            if (selectedSymptoms.length > 0 && selectedSymptoms[0] !== 13) {
-                try {
-                    saveSymptoms(currentUser, selectedSymptoms.join(','));
-                } catch (error) {
-                    console.log('Failed to save symptoms:', error);
-                }
-            }
-            
-            // Show initial results
-            showDetailedResults();
+        } catch (error) {
+            console.log('Failed to save symptoms:', error);
+        }
+        }   
+    
+    // Show initial results
+        showDetailedResults();
         }
 
         // Back to symptoms selection
@@ -1322,16 +1330,22 @@
         // === HELPER FUNCTIONS ===
         
         function getSymptomNames(symptomIds) {
-            if (!symptomIds || symptomIds.length === 0) return "None";
-            if (symptomIds.includes(13)) return "Everything is fine";
-            
-            const symptomMap = {
-                1: "Cramps", 2: "Tender breasts", 3: "Fatigue", 4: "Bloating",
-                5: "Headache", 6: "Acne", 7: "Backache", 8: "Nausea",
-                9: "Cravings", 10: "Insomnia", 11: "Constipation", 12: "Diarrhea"
-            };
-            
-            return symptomIds.map(id => symptomMap[id]).join(", ");
+    // Handle case where symptomIds is a string "13" (Everything is fine)
+        if (symptomIds === "13") {
+        return "Everything is fine";
+        }
+    
+    // Handle case where it's an array of numbers
+        if (!symptomIds || symptomIds.length === 0) return "None";
+        if (symptomIds.includes(13)) return "Everything is fine";
+    
+        const symptomMap = {
+        1: "Cramps", 2: "Tender breasts", 3: "Fatigue", 4: "Bloating",
+        5: "Headache", 6: "Acne", 7: "Backache", 8: "Nausea",
+        9: "Cravings", 10: "Insomnia", 11: "Constipation", 12: "Diarrhea"
+        };
+    
+        return symptomIds.map(id => symptomMap[id]).join(", ");
         }
         
         function getSymptomDescription(symptomIds) {
