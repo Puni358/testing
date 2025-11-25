@@ -620,27 +620,45 @@
         }
 
         function loadUserData(personalID, password) {
-            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
-            const userData = allUsers[personalID];
-            
-            if (userData && userData.password === password) {
-                // Update last login time
-                userData.lastLogin = new Date().toISOString();
-                allUsers[personalID] = userData;
-                localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
-                
-                return {
-                    success: true,
-                    data: {
-                        day: userData.day,
-                        month: userData.month,
-                        cycle: userData.cycle,
-                        symptomsHistory: userData.symptomsHistory || []
-                    }
-                };
+        try {
+        const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+        const userData = allUsers[personalID];
+        
+        console.log('Login attempt for:', personalID);
+        console.log('Stored users:', Object.keys(allUsers));
+        
+        if (!userData) {
+            console.log('User not found in storage');
+            return { success: false, error: 'Personal ID not registered' };
+        }
+        
+        // Check if password matches
+        if (userData.password !== password) {
+            console.log('Password mismatch. Entered:', password, 'Stored:', userData.password);
+            return { success: false, error: 'Incorrect password' };
+        }
+        
+        // Update last login time
+        userData.lastLogin = new Date().toISOString();
+        allUsers[personalID] = userData;
+        localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
+        
+        console.log('Login successful for:', personalID);
+        
+        return {
+            success: true,
+            data: {
+                day: userData.day,
+                month: userData.month,
+                cycle: userData.cycle,
+                symptomsHistory: userData.symptomsHistory || []
             }
-            
-            return { success: false, error: 'Invalid credentials' };
+        };
+        
+        } catch (error) {
+        console.error('Login error:', error);
+        return { success: false, error: 'System error during login' };
+        }
         }
 
         function userExists(personalID) {
@@ -946,39 +964,51 @@
         }
 
         // Login user
+        // Debug function to check stored users
+        function debugStoredUsers() {
+        const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+        console.log('All stored users:', allUsers);
+        return allUsers;
+        }
+        // Login user - with better error handling
         function loginUser() {
-            const personalID = document.getElementById('loginPersonalID').value;
-            const password = document.getElementById('loginPassword').value;
+        const personalID = document.getElementById('loginPersonalID').value;
+        const password = document.getElementById('loginPassword').value;
 
-            if (!personalID || !password) {
-                document.getElementById('loginResult').textContent = 'Please enter Personal ID and password';
-                return;
-            }
+        if (!personalID || !password) {
+        document.getElementById('loginResult').textContent = 'Please enter Personal ID and password';
+        return;
+        }
 
-            try {
-                const result = loadUserData(personalID, password);
-                
-                if (result.success) {
-                    document.getElementById('loginResult').textContent = '✅ Login successful!';
-                    
-                    currentUser = personalID;
-                    userDay = result.data.day;
-                    userMonth = result.data.month;
-                    userCycle = result.data.cycle;
-                    // Store password for potential updates
-                    window.tempPassword = password;
-                    
-                    // Wait a moment then show symptoms selection
-                    setTimeout(() => {
-                        showSymptomsSelection();
-                    }, 1000);
-                    
-                } else {
-                    document.getElementById('loginResult').textContent = '❌ ' + result.error;
-                }
-            } catch (error) {
-                document.getElementById('loginResult').textContent = '❌ Login error: ' + error.message;
-            }
+        console.log('Login attempt started for:', personalID);
+    
+        try {
+        const result = loadUserData(personalID, password);
+        
+        if (result.success) {
+            document.getElementById('loginResult').textContent = '✅ Login successful!';
+            console.log('Login successful, user data:', result.data);
+            
+            currentUser = personalID;
+            userDay = result.data.day;
+            userMonth = result.data.month;
+            userCycle = result.data.cycle;
+            // Store password for potential updates
+            window.tempPassword = password;
+            
+            // Wait a moment then show symptoms selection
+            setTimeout(() => {
+                showSymptomsSelection();
+            }, 1000);
+            
+        } else {
+            document.getElementById('loginResult').textContent = '❌ ' + result.error;
+            console.log('Login failed:', result.error);
+        }
+        } catch (error) {
+        document.getElementById('loginResult').textContent = '❌ Login error: ' + error.message;
+        console.error('Login exception:', error);
+        }
         }
 
         // Back to authentication step
