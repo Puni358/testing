@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menstrual Cycle Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        input, button, select {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #ff69b4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #ff1493;
+        }
+        .sync-btn {
+            background-color: #17a2b8 !important;
+        }
+        .sync-btn:hover {
+            background-color: #138496 !important;
+        }
+        .result {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+        .hidden {
+            display: none;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+        }
+        .step.active {
+            background: #ff69b4;
+            color: white;
+        }
+        .sync-section {
+            margin: 15px 0;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 8px;
+            border: 1px solid #c3e6cb;
+        }
+        .requirements-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .requirement-item {
+            margin: 3px 0;
+        }
+        .compact-instruction {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+            line-height: 1.3;
+        }
+        .symptom-button {
+            display: inline-block;
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 120px;
+        }
+        .symptom-button:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        .symptom-button.selected {
+            background-color: #ff69b4;
+            color: white;
+            border-color: #ff1493;
+        }
+        .symptoms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .continue-btn {
+            background-color: #28a745;
+            padding: 12px 30px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .continue-btn:hover {
+            background-color: #218838;
+        }
+        .update-cycle-btn {
+            background-color: #6c5ce7;
+            margin: 5px;
+        }
+        .update-cycle-btn:hover {
+            background-color: #5649c0;
+        }
+        
+        /* New styles for split results pages */
+        .results-nav {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+        }
+        .nav-btn {
+            background: transparent;
+            color: #666;
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            margin: 0 5px;
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+        .nav-btn.active {
+            color: #ff69b4;
+            border-bottom: 3px solid #ff69b4;
+            background: transparent;
+        }
+        .results-page {
+            min-height: 300px;
+        }
+        .phase-indicator {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .phase-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .phase-menstrual { background-color: #e74c3c; }
+        .phase-follicular { background-color: #3498db; }
+        .phase-ovulation { background-color: #9b59b6; }
+        .phase-luteal { background-color: #f39c12; }
+        .cycle-day {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff69b4;
+            margin: 10px 0;
+        }
+        .info-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-left: 4px solid #ff69b4;
+        }
+        .symptom-history-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        .symptom-history-date {
+            font-weight: bold;
+        }
+        .symptom-history-symptoms {
+            color: #666;
+        }
+        .prediction-card {
+            background: #e8f4fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+        .advice-card {
+            background: #fff3cd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .additional-info-card {
+            background: #e8f5e9;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border-left: 4px solid #4caf50;
+        }
+        .expected-symptoms {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .day-prediction {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 0 5px;
+        }
+        .advice-item {
+            margin-bottom: 15px;
+        }
+        .advice-main {
+            font-weight: bold;
+        }
+        .advice-detail {
+            margin-left: 20px;
+            color: #555;
+        }
+        .additional-info-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .additional-info-item {
+            margin-bottom: 8px;
+        }
+        .references {
+            margin-top: 20px;
+            font-style: italic;
+        }
+        .general-symptoms-list {
+            margin-top: 10px;
+        }
+        .general-symptom-item {
+            margin-bottom: 5px;
+        }
+        .common-symptom-item {
+            margin-bottom: 8px;
+        }
+        .symptom-percentage {
+            font-weight: bold;
+            color: #ff69b4;
+        }
+        .date-info {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            border-left: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌺 Menstrual Cycle Tracker 🌺</h1>
+        
+        <!-- Step 1: Authentication -->
+        <div class="section" id="authSection">
+            <div class="step-indicator">
+                <div class="step active">1</div>
+                <div class="step">2</div>
+                <div class="step">3</div>
+            </div>
+            
+            <h2>Welcome! Please Login or Register</h2>
+            
+            <!-- Sync Section - Added at the top -->
+            <div class="sync-section">
+                <h4 style="margin: 0 0 10px 0; color: #155724;">🔁 Sync Data Between Devices</h4>
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f5132;">
+                    <small>Already have data from another device? Import it here!</small>
+                </p>
+                <button onclick="promptForImport()" class="sync-btn">
+                    📥 Import Data from Another Device
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button onclick="showRegister()">Register</button>
+                <button onclick="showLogin()">Login</button>
+            </div>
+            
+            <!-- Registration Form - Step 1 -->
+            <div id="registerForm" class="hidden">
+                <h3>Step 1: Create Account</h3>
+                
+                <!-- Compact Requirements Box -->
+                <div class="requirements-box">
+                    <strong>Personal ID Requirements:</strong>
+                    <div class="requirement-item">✓ Min 4 characters</div>
+                    <div class="requirement-item">✓ A-Z, a-z, 0-9</div>
+                    <div class="requirement-item">✓ Special: !@#$%^&*</div>
+                    <div class="requirement-item">✓ Example: User@123</div>
+                </div>
+                
+                <input type="text" id="regPersonalID" placeholder="Enter Personal ID" style="width: 300px;">
+                <div class="compact-instruction">Must include capital, small letter, number & special character</div>
+                <br>
+                <input type="password" id="regPassword" placeholder="Password" style="width: 300px;">
+                <br><br>
+                <button onclick="registerStep1()">Next: Enter Cycle Info</button>
+                <div id="registerResult" class="result"></div>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm" class="hidden">
+                <h3>Login to Your Account</h3>
+                <input type="text" id="loginPersonalID" placeholder="Personal ID" style="width: 300px;">
+                <input type="password" id="loginPassword" placeholder="Password">
+                <br>
+                <button onclick="loginUser()">Login</button>
+                <div id="loginResult" class="result"></div>
+            </div>
+        </div>
+        
+        <!-- Step 2: Cycle Information (for new users only) -->
+        <div class="section hidden" id="cycleInfoSection">
+            <div class="step-indicator">
+                <div class="step">1</div>
+                <div class="step active">2</div>
+                <div class="step">3</div>
+            </div>
+            
+            <h2>Almost Done! Set Up Your Cycle Information</h2>
+            
+            <!-- Date Information Box -->
+            <div class="date-info">
+                <strong>📅 Date Requirements:</strong>
+                <div>• Last period date must be within the last 35 days</div>
+                <div>• Cannot be a future date</div>
+                <div>• Example: If today is 25th Nov, valid dates are between 21st Oct - 25th Nov</div>
+            </div>
+            
+            <div style="background: #f8f8f8; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h3>Last Menstrual Period:</h3>
+                <div style="margin: 10px 0;">
+                    <input type="number" id="regDay" placeholder="Start Day (1-31)" min="1" max="31" style="width: 140px;">
+                    <input type="number" id="regMonth" placeholder="Start Month (1-12)" min="1" max="12" style="width: 140px;">
+                </div>
+                <div style="margin: 10px 0;">
+                    <input type="number" id="regCycle" placeholder="Cycle Length (21-35 days)" min="21" max="35" style="width: 200px;">
+                </div>
+            </div>
+            
+            <button onclick="completeRegistration()">Complete Registration</button>
+            <button onclick="backToAuth()" style="background: #666;">Back</button>
+            <div id="cycleInfoResult" class="result"></div>
+        </div>
+        
+        <!-- Step 2.5: Symptoms Selection Page -->
+        <div class="section hidden" id="symptomsSection">
+            <div class="step-indicator">
+                <div class="step">1</div>
+                <div class="step">2</div>
+                <div class="step active">3</div>
+            </div>
+            
+            <h2>Select Today's Symptoms</h2>
+            <p>Click on the symptoms you're experiencing today:</p>
+            
+            <div class="symptoms-grid" id="symptomsButtons">
+                <!-- Symptoms buttons will be generated here -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="goToResults()" class="continue-btn">Continue to Results</button>
+                <button onclick="updateCycleInfo()" class="update-cycle-btn">🔄 Update Cycle Info</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Results Pages -->
+        <div class="section hidden" id="resultsSection">
+            <div class="step-indicator">
+                <div class="step">1</div>
+                <div class="step">2</div>
+                <div class="step active">3</div>
+            </div>
+            
+            <h2>Your Cycle Analysis</h2>
+            
+            <!-- Export Section in Results -->
+            <div class="sync-section">
+                <h4 style="margin: 0 0 10px 0; color: #155724;">📤 Export Data to Another Device</h4>
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #0f5132;">
+                    <small>Copy this data to use on another device</small>
+                </p>
+                <button onclick="exportUserData()" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+                    📤 Export My Data
+                </button>
+            </div>
+            
+            <!-- Navigation for Results Pages -->
+            <div class="results-nav">
+                <button class="nav-btn active" onclick="showResultsPage('overview')">Cycle Overview</button>
+                <button class="nav-btn" onclick="showResultsPage('advice')">Advice & Symptoms</button>
+                <button class="nav-btn" onclick="showResultsPage('history')">Symptoms History</button>
+                <button class="nav-btn" onclick="showResultsPage('additional')">Additional Info</button>
+            </div>
+            
+            <!-- Page 1: Cycle Overview -->
+            <div id="overviewPage" class="results-page">
+                <div class="phase-indicator">
+                    <div class="phase-color" id="phaseColorIndicator"></div>
+                    <div>
+                        <h3 id="currentPhase">Current Phase</h3>
+                        <div class="cycle-day" id="cycleDayIndicator">Day 1</div>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h4>Today's Summary</h4>
+                    <div id="overviewSummary">Loading summary...</div>
+                </div>
+                
+                <div class="info-card">
+                    <h4>Key Information</h4>
+                    <div id="keyInfo">Loading key information...</div>
+                </div>
+                
+                <div class="info-card">
+                    <h4>Next Expected Period</h4>
+                    <div id="nextPeriod">Calculating...</div>
+                </div>
+            </div>
+            
+            <!-- Page 2: Advice & General Symptoms -->
+            <div id="advicePage" class="results-page hidden">
+                <div class="advice-card">
+                    <h4>Personalized Advice</h4>
+                    <div id="personalAdvice">Loading advice...</div>
+                </div>
+                
+                <div class="info-card">
+                    <h4>General Symptoms for Your Current Phase</h4>
+                    <div id="generalSymptoms">Loading general symptoms...</div>
+                </div>
+            </div>
+            
+            <!-- Page 3: Symptoms History -->
+            <div id="historyPage" class="results-page hidden">
+                <div class="info-card">
+                    <h4>Today's Symptoms</h4>
+                    <div id="todaySymptoms">No symptoms recorded today.</div>
+                </div>
+                
+                <div class="info-card">
+                    <h4>Symptoms History</h4>
+                    <div id="symptomsHistoryList">
+                        Loading symptoms history...
+                    </div>
+                </div>
+                
+                <div class="prediction-card">
+                    <h4>Expected Symptoms in Next 3 Days</h4>
+                    <div id="expectedSymptoms">
+                        Loading expected symptoms...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Page 4: Additional Information -->
+            <div id="additionalPage" class="results-page hidden">
+                <div class="additional-info-card">
+                    <h4>Additional Information About Your Current Phase</h4>
+                    <div id="additionalInfo">Loading additional information...</div>
+                </div>
+            </div>
+            
+            <!-- Action buttons -->
+            <div style="margin: 20px 0; text-align: center;">
+                <button onclick="backToSymptoms()" style="background: #666;">Back to Symptoms</button>
+                <button onclick="updateCycleInfo()" class="update-cycle-btn">🔄 Update Cycle Info</button>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let userDay = null;
+        let userMonth = null;
+        let userCycle = null;
+        let tempPersonalID = null;
+        let tempPassword = null;
+        let selectedSymptoms = [];
+        let currentResults = null;
+
+        // Symptom data from C program
+        const symptomData = {
+            "Menstrual Phase": {
+                "1-3": [
+                    { symptom: "Cramps", low: 50, high: 90 },
+                    { symptom: "Fatigue", low: 60, high: 80 },
+                    { symptom: "Lower back pain", low: 50, high: 70 },
+                    { symptom: "Diarrhea/loose stools", low: 30, high: 50 },
+                    { symptom: "Headache", low: 30, high: 50 },
+                    { symptom: "Bloating", low: 40, high: 60 }
+                ],
+                "4-5": [
+                    { symptom: "Cramps (reduced)", low: 20, high: 40 },
+                    { symptom: "Fatigue", low: 30, high: 50 },
+                    { symptom: "Light bleeding", low: 100, high: 100 },
+                    { symptom: "Mood improving", low: 10, high: 30 }
+                ]
+            },
+            "Follicular Phase": {
+                "6-8": [
+                    { symptom: "Energy rising", low: 60, high: 90 },
+                    { symptom: "Improved mood", low: 50, high: 80 },
+                    { symptom: "Clearer skin", low: 20, high: 40 }
+                ],
+                "9-11": [
+                    { symptom: "Slight increase in libido", low: 20, high: 40 },
+                    { symptom: "Mild breast tenderness", low: 10, high: 20 },
+                    { symptom: "Better cognition / focus", low: 30, high: 60 }
+                ],
+                "12-13": [
+                    { symptom: "Increasing cervical mucus", low: 60, high: 90 },
+                    { symptom: "Increased libido", low: 40, high: 70 },
+                    { symptom: "Possible early ovulation signs", low: 10, high: 20 }
+                ]
+            },
+            "Ovulation Phase": {
+                "14": [
+                    { symptom: "Stretchy clear cervical mucus", low: 80, high: 90 },
+                    { symptom: "Libido spike", low: 60, high: 70 },
+                    { symptom: "Mittelschmerz (ovulation pain)", low: 20, high: 40 },
+                    { symptom: "Mild nausea", low: 15, high: 25 },
+                    { symptom: "Mild breast tenderness", low: 20, high: 30 }
+                ]
+            },
+            "Luteal Phase": {
+                "15-18": [
+                    { symptom: "Fatigue", low: 40, high: 60 },
+                    { symptom: "Bloating", low: 40, high: 60 },
+                    { symptom: "Breast tenderness", low: 60, high: 75 }
+                ],
+                "19-22": [
+                    { symptom: "Irritability", low: 50, high: 60 },
+                    { symptom: "Mood swings", low: 40, high: 60 },
+                    { symptom: "Headache", low: 30, high: 50 },
+                    { symptom: "Cravings (carbs)", low: 40, high: 60 }
+                ],
+                "23-26": [
+                    { symptom: "Anxiety", low: 30, high: 50 },
+                    { symptom: "Heightened irritability", low: 60, high: 75 },
+                    { symptom: "Fatigue", low: 60, high: 70 }
+                ],
+                "27-28": [
+                    { symptom: "Bloating", low: 60, high: 70 },
+                    { symptom: "Headache", low: 40, high: 60 },
+                    { symptom: "Lower back pain", low: 30, high: 50 },
+                    { symptom: "Return of cramps (mild)", low: 30, high: 50 }
+                ]
+            }
+        };
+
+        // Enhanced storage functions
+        function saveUserData(personalID, password, day, month, cycle) {
+            const userData = {
+                password: password,
+                day: day,
+                month: month,
+                cycle: cycle,
+                lastLogin: new Date().toISOString(),
+                symptomsHistory: []
+            };
+            
+            // Get all existing users
+            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+            
+            // Add/update this user
+            allUsers[personalID] = userData;
+            
+            // Save back to localStorage
+            localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
+            
+            console.log('User data saved for:', personalID);
+        }
+
+        function loadUserData(personalID, password) {
+            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+            const userData = allUsers[personalID];
+            
+            if (userData && userData.password === password) {
+                // Update last login time
+                userData.lastLogin = new Date().toISOString();
+                allUsers[personalID] = userData;
+                localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
+                
+                return {
+                    success: true,
+                    data: {
+                        day: userData.day,
+                        month: userData.month,
+                        cycle: userData.cycle,
+                        symptomsHistory: userData.symptomsHistory || []
+                    }
+                };
+            }
+            
+            return { success: false, error: 'Invalid credentials' };
+        }
+
+        function userExists(personalID) {
+            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+            return !!allUsers[personalID];
+        }
+
+        // FIXED: Save symptoms function - prevents duplicate entries for same day
+    function saveSymptoms(personalID, symptoms) {
+    const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+        const userData = allUsers[personalID];
+
+        if (userData) {
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date();
+        const todayString = today.toISOString().split('T')[0];
+        
+        // Initialize symptomsHistory if it doesn't exist
+        if (!userData.symptomsHistory) {
+            userData.symptomsHistory = [];
+        }
+        
+        // Remove ALL existing entries for today before adding new one
+        userData.symptomsHistory = userData.symptomsHistory.filter(entry => entry.date !== todayString);
+        
+        // Add new entry for today
+        userData.symptomsHistory.push({
+            date: todayString,
+            symptoms: symptoms
+        });
+        
+        // Sort by date (newest first)
+        userData.symptomsHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        allUsers[personalID] = userData;
+        localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
+        
+        console.log('Symptoms saved for date:', todayString);
+        }
+        }
+        function getSymptomsHistory(personalID) {
+            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+            const userData = allUsers[personalID];
+            
+            if (userData && userData.symptomsHistory) {
+                return userData.symptomsHistory;
+            }
+            
+            return [];
+        }
+
+        // Enhanced Personal ID validation function
+        function validatePersonalID(personalID) {
+            // Check minimum length
+            if (personalID.length < 4) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must be at least 4 characters long'
+                };
+            }
+
+            // Check for at least one capital letter
+            if (!/[A-Z]/.test(personalID)) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must contain at least one capital letter (A-Z)'
+                };
+            }
+
+            // Check for at least one small letter
+            if (!/[a-z]/.test(personalID)) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must contain at least one small letter (a-z)'
+                };
+            }
+
+            // Check for at least one number
+            if (!/\d/.test(personalID)) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must contain at least one number (0-9)'
+                };
+            }
+
+            // Check for at least one special character from the allowed list
+            const allowedSpecialChars = /[!@#$%^&*]/;
+            if (!allowedSpecialChars.test(personalID)) {
+                return {
+                    isValid: false,
+                    message: 'Personal ID must contain at least one special character (!, @, #, $, %, ^, &, *)'
+                };
+            }
+
+            // All conditions passed
+            return {
+                isValid: true,
+                message: 'Personal ID is valid'
+            };
+        }
+
+        // Show registration form
+        function showRegister() {
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerResult').textContent = '';
+        }
+
+        // Show login form
+        function showLogin() {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginResult').textContent = '';
+        }
+
+        // Step 1: Register (just credentials)
+        function registerStep1() {
+            const personalID = document.getElementById('regPersonalID').value;
+            const password = document.getElementById('regPassword').value;
+
+            if (!personalID || !password) {
+                document.getElementById('registerResult').textContent = 'Please enter both Personal ID and Password';
+                return;
+            }
+
+            // Enhanced Personal ID validation
+            const validationResult = validatePersonalID(personalID);
+            if (!validationResult.isValid) {
+                document.getElementById('registerResult').textContent = validationResult.message;
+                return;
+            }
+
+            // Check if user already exists
+            if (userExists(personalID)) {
+                document.getElementById('registerResult').textContent = 'This Personal ID is already registered. Please login instead.';
+                return;
+            }
+
+            // Store temp credentials and proceed to step 2
+            window.tempPersonalID = personalID;
+            window.tempPassword = password;
+            
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('cycleInfoSection').classList.remove('hidden');
+            document.getElementById('registerResult').textContent = '';
+        }
+
+        // Step 2: Complete registration with cycle info - WITH DATE VALIDATION
+        function completeRegistration() {
+            const day = parseInt(document.getElementById('regDay').value);
+            const month = parseInt(document.getElementById('regMonth').value);
+            const cycle = parseInt(document.getElementById('regCycle').value);
+
+            if (!day || !month || !cycle) {
+                document.getElementById('cycleInfoResult').textContent = 'Please fill all cycle information fields';
+                return;
+            }
+
+            if (day < 1 || day > 31) {
+                document.getElementById('cycleInfoResult').textContent = 'Please enter a valid day (1-31)';
+                return;
+            }
+
+            if (month < 1 || month > 12) {
+                document.getElementById('cycleInfoResult').textContent = 'Please enter a valid month (1-12)';
+                return;
+            }
+
+            if (cycle < 21 || cycle > 35) {
+                document.getElementById('cycleInfoResult').textContent = 'Cycle length must be between 21-35 days';
+                return;
+            }
+
+            // === DATE VALIDATION: No future dates and no dates more than 35 days ago ===
+            const currentDate = new Date();
+            const enteredDate = new Date(currentDate.getFullYear(), month - 1, day);
+            
+            // Check if date is in future
+            if (enteredDate > currentDate) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Last period date cannot be in the future';
+                return;
+            }
+            
+            // Check if date is more than 35 days ago (max cycle length)
+            const thirtyFiveDaysAgo = new Date();
+            thirtyFiveDaysAgo.setDate(thirtyFiveDaysAgo.getDate() - 35);
+            
+            if (enteredDate < thirtyFiveDaysAgo) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Last period date cannot be more than 35 days ago. Please enter a more recent date.';
+                return;
+            }
+
+            try {
+                // Save user data to localStorage
+                saveUserData(window.tempPersonalID, window.tempPassword, day, month, cycle);
+                
+                document.getElementById('cycleInfoResult').textContent = '✅ Registration successful!';
+                
+                // Auto-login after successful registration
+                currentUser = window.tempPersonalID;
+                userDay = day;
+                userMonth = month;
+                userCycle = cycle;
+                
+                // Wait a moment then show symptoms selection
+                setTimeout(() => {
+                    showSymptomsSelection();
+                }, 1000);
+                
+            } catch (error) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Registration error: ' + error.message;
+            }
+        }
+
+        // Update cycle information - WITH DATE VALIDATION
+        function updateCycleInfo() {
+            if (!currentUser) return;
+            
+            // Pre-fill current values
+            document.getElementById('regDay').value = userDay;
+            document.getElementById('regMonth').value = userMonth;
+            document.getElementById('regCycle').value = userCycle;
+            
+            // Hide current section and show cycle info section
+            document.getElementById('symptomsSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('cycleInfoSection').classList.remove('hidden');
+            
+            // Update step indicator
+            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+            document.querySelectorAll('.step-indicator .step')[1].classList.add('active');
+            
+            // Change the button to "Update Cycle" instead of "Complete Registration"
+            const completeBtn = document.querySelector('#cycleInfoSection button[onclick="completeRegistration()"]');
+            completeBtn.textContent = 'Update Cycle Information';
+            completeBtn.onclick = saveUpdatedCycleInfo;
+        }
+
+        // Save updated cycle information - WITH DATE VALIDATION
+        function saveUpdatedCycleInfo() {
+            const day = parseInt(document.getElementById('regDay').value);
+            const month = parseInt(document.getElementById('regMonth').value);
+            const cycle = parseInt(document.getElementById('regCycle').value);
+
+            if (!day || !month || !cycle) {
+                document.getElementById('cycleInfoResult').textContent = 'Please fill all cycle information fields';
+                return;
+            }
+
+            if (day < 1 || day > 31) {
+                document.getElementById('cycleInfoResult').textContent = 'Please enter a valid day (1-31)';
+                return;
+            }
+
+            if (month < 1 || month > 12) {
+                document.getElementById('cycleInfoResult').textContent = 'Please enter a valid month (1-12)';
+                return;
+            }
+
+            if (cycle < 21 || cycle > 35) {
+                document.getElementById('cycleInfoResult').textContent = 'Cycle length must be between 21-35 days';
+                return;
+            }
+
+            // === DATE VALIDATION: No future dates and no dates more than 35 days ago ===
+            const currentDate = new Date();
+            const enteredDate = new Date(currentDate.getFullYear(), month - 1, day);
+            
+            // Check if date is in future
+            if (enteredDate > currentDate) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Last period date cannot be in the future';
+                return;
+            }
+            
+            // Check if date is more than 35 days ago (max cycle length)
+            const thirtyFiveDaysAgo = new Date();
+            thirtyFiveDaysAgo.setDate(thirtyFiveDaysAgo.getDate() - 35);
+            
+            if (enteredDate < thirtyFiveDaysAgo) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Last period date cannot be more than 35 days ago. Please enter a more recent date.';
+                return;
+            }
+
+            try {
+                // Update user data in localStorage
+                saveUserData(currentUser, tempPassword, day, month, cycle);
+                
+                // Update global variables
+                userDay = day;
+                userMonth = month;
+                userCycle = cycle;
+                
+                document.getElementById('cycleInfoResult').textContent = '✅ Cycle information updated successfully!';
+                
+                // Wait a moment then return to symptoms selection
+                setTimeout(() => {
+                    showSymptomsSelection();
+                }, 1000);
+                
+            } catch (error) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Update error: ' + error.message;
+            }
+        }
+
+        // Login user
+        function loginUser() {
+            const personalID = document.getElementById('loginPersonalID').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!personalID || !password) {
+                document.getElementById('loginResult').textContent = 'Please enter Personal ID and password';
+                return;
+            }
+
+            try {
+                const result = loadUserData(personalID, password);
+                
+                if (result.success) {
+                    document.getElementById('loginResult').textContent = '✅ Login successful!';
+                    
+                    currentUser = personalID;
+                    userDay = result.data.day;
+                    userMonth = result.data.month;
+                    userCycle = result.data.cycle;
+                    // Store password for potential updates
+                    window.tempPassword = password;
+                    
+                    // Wait a moment then show symptoms selection
+                    setTimeout(() => {
+                        showSymptomsSelection();
+                    }, 1000);
+                    
+                } else {
+                    document.getElementById('loginResult').textContent = '❌ ' + result.error;
+                }
+            } catch (error) {
+                document.getElementById('loginResult').textContent = '❌ Login error: ' + error.message;
+            }
+        }
+
+        // Back to authentication step
+        function backToAuth() {
+            document.getElementById('cycleInfoSection').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('cycleInfoResult').textContent = '';
+            
+            // Reset the button text
+            const completeBtn = document.querySelector('#cycleInfoSection button[onclick="saveUpdatedCycleInfo"]');
+            if (completeBtn) {
+                completeBtn.textContent = 'Complete Registration';
+                completeBtn.onclick = completeRegistration;
+            }
+        }
+
+        // Show symptoms selection section
+        function showSymptomsSelection() {
+            document.getElementById('authSection').classList.add('hidden');
+            document.getElementById('cycleInfoSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('symptomsSection').classList.remove('hidden');
+            
+            // Clear previous selections
+            selectedSymptoms = [];
+            
+            // Create symptom buttons
+            const symptoms = [
+                { id: 1, name: "Cramps" },
+                { id: 2, name: "Tender breasts" },
+                { id: 3, name: "Fatigue" },
+                { id: 4, name: "Bloating" },
+                { id: 5, name: "Headache" },
+                { id: 6, name: "Acne" },
+                { id: 7, name: "Backache" },
+                { id: 8, name: "Nausea" },
+                { id: 9, name: "Cravings" },
+                { id: 10, name: "Insomnia" },
+                { id: 11, name: "Constipation" },
+                { id: 12, name: "Diarrhea" },
+                { id: 13, name: "Everything is fine" }
+            ];
+            
+            const symptomsContainer = document.getElementById('symptomsButtons');
+            symptomsContainer.innerHTML = '';
+            
+            symptoms.forEach(symptom => {
+                const button = document.createElement('div');
+                button.className = 'symptom-button';
+                button.textContent = symptom.name;
+                button.onclick = () => toggleSymptom(symptom.id, button);
+                symptomsContainer.appendChild(button);
+            });
+        }
+
+        // Toggle symptom selection
+        function toggleSymptom(symptomId, buttonElement) {
+            if (symptomId === 13) {
+                // "Everything is fine" selected - clear all others
+                selectedSymptoms = [13];
+                // Update all buttons
+                document.querySelectorAll('.symptom-button').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                buttonElement.classList.add('selected');
+            } else {
+                // Remove "Everything is fine" if it was selected
+                const everythingIndex = selectedSymptoms.indexOf(13);
+                if (everythingIndex > -1) {
+                    selectedSymptoms.splice(everythingIndex, 1);
+                    document.querySelectorAll('.symptom-button').forEach(btn => {
+                        if (btn.textContent === "Everything is fine") {
+                            btn.classList.remove('selected');
+                        }
+                    });
+                }
+                
+                // Toggle the current symptom
+                const index = selectedSymptoms.indexOf(symptomId);
+                if (index > -1) {
+                    selectedSymptoms.splice(index, 1);
+                    buttonElement.classList.remove('selected');
+                } else {
+                    selectedSymptoms.push(symptomId);
+                    buttonElement.classList.add('selected');
+                }
+            }
+        }
+
+        // Go to results page
+        function goToResults() {
+            if (selectedSymptoms.length === 0) {
+                alert('Please select at least one symptom or "Everything is fine"');
+                return;
+            }
+            
+            document.getElementById('symptomsSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            
+            // Save symptoms if any were entered (except "Everything is fine")
+            if (selectedSymptoms.length > 0 && selectedSymptoms[0] !== 13) {
+                try {
+                    saveSymptoms(currentUser, selectedSymptoms.join(','));
+                } catch (error) {
+                    console.log('Failed to save symptoms:', error);
+                }
+            }
+            
+            // Show initial results
+            showDetailedResults();
+        }
+
+        // Back to symptoms selection
+        function backToSymptoms() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('symptomsSection').classList.remove('hidden');
+        }
+
+        // FIXED: Show detailed results with proper date calculation
+        function showDetailedResults() {
+            if (!currentUser) return;
+
+            // FIXED: Calculate current cycle day properly
+            const currentDate = new Date();
+            
+            // Create start date from the last period
+            let startDate = new Date(currentDate.getFullYear(), userMonth - 1, userDay);
+            
+            // If the start date is in the future (next year), adjust it
+            if (startDate > currentDate) {
+                startDate.setFullYear(startDate.getFullYear() - 1);
+            }
+            
+            // Calculate days difference
+            const diffTime = currentDate - startDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const cycleDay = (diffDays % userCycle) + 1;
+            
+            // Determine current phase
+            let currentPhase, phaseColor;
+            if (cycleDay <= 5) {
+                currentPhase = "Menstrual Phase";
+                phaseColor = "phase-menstrual";
+            } else if (cycleDay <= 12) {
+                currentPhase = "Follicular Phase";
+                phaseColor = "phase-follicular";
+            } else if (cycleDay <= 16) {
+                currentPhase = "Ovulation Phase";
+                phaseColor = "phase-ovulation";
+            } else {
+                currentPhase = "Luteal Phase";
+                phaseColor = "phase-luteal";
+            }
+            
+            // Update all result pages
+            updateResultsPages(currentPhase, cycleDay, phaseColor);
+        }
+
+        // Update all results pages with data
+        function updateResultsPages(currentPhase, cycleDay, phaseColor) {
+            // Update Overview Page
+            updateOverviewPage(currentPhase, cycleDay, phaseColor);
+            
+            // Update Advice Page
+            updateAdvicePage(currentPhase, cycleDay);
+            
+            // Update History Page
+            updateHistoryPage();
+            
+            // Update Additional Information Page
+            updateAdditionalInfoPage(currentPhase);
+        }
+
+        // Update Overview Page
+        function updateOverviewPage(currentPhase, cycleDay, phaseColor) {
+            // Update UI elements
+            document.getElementById('cycleDayIndicator').textContent = `Day ${cycleDay}`;
+            document.getElementById('currentPhase').textContent = currentPhase;
+            document.getElementById('phaseColorIndicator').className = `phase-color ${phaseColor}`;
+            
+            // Update summary
+            document.getElementById('overviewSummary').innerHTML = `
+                <p>You are currently in the <strong>${currentPhase}</strong> of your cycle.</p>
+                <p>Based on your symptoms, you may experience: ${getSymptomDescription(selectedSymptoms)}</p>
+            `;
+            
+            // Update key information with COMMON symptoms with percentages
+            document.getElementById('keyInfo').innerHTML = getCommonSymptomsWithPercentages(currentPhase, cycleDay);
+            
+            // Calculate next period
+            const nextPeriodDate = calculateNextPeriod(userDay, userMonth, userCycle);
+            document.getElementById('nextPeriod').textContent = nextPeriodDate;
+        }
+
+        // Update Advice Page
+        function updateAdvicePage(currentPhase, cycleDay) {
+            // Update personalized advice
+            document.getElementById('personalAdvice').innerHTML = getPersonalizedAdvice(currentPhase, selectedSymptoms);
+            
+            // Update general symptoms for the current phase
+            document.getElementById('generalSymptoms').innerHTML = getGeneralSymptomsForPhase(currentPhase);
+        }
+
+        // FIXED: Update History Page function - shows only unique dates
+    function updateHistoryPage() {
+    // Get symptoms history
+        const symptomsHistory = getSymptomsHistory(currentUser);
+
+    // Update today's symptoms
+        const today = new Date();
+        const todayFormatted = formatDate(today.toISOString().split('T')[0]);
+
+        if (selectedSymptoms.length > 0) {
+        if (selectedSymptoms.includes(13)) {
+            document.getElementById('todaySymptoms').innerHTML = `
+                <div style="color: green; font-weight: bold;">
+                    ${todayFormatted}: Everything is fine
+                </div>
+                <div style="margin-top: 10px; color: #28a745;">
+                    ✅ Your symptoms have been saved for AI training!
+                </div>
+            `;
+        } else {
+            const symptomNames = getSymptomNames(selectedSymptoms);
+            document.getElementById('todaySymptoms').innerHTML = `
+                <div style="font-weight: bold;">
+                    ${todayFormatted}: 
+                </div>
+                <div style="margin-top: 10px;">
+                    ${symptomNames.split(', ').map(symptom => `<div>- ${symptom}</div>`).join('')}
+                </div>
+                <div style="margin-top: 10px; color: #28a745;">
+                    ✅ Your symptoms have been saved for AI training!
+                </div>
+            `;
+        }
+        } else {
+        document.getElementById('todaySymptoms').textContent = `No symptoms recorded for ${todayFormatted}.`;
+        }
+
+    // Update symptoms history list - Show only unique dates (latest entry per day)
+        const historyList = document.getElementById('symptomsHistoryList');
+        historyList.innerHTML = '';
+
+        if (symptomsHistory.length === 0) {
+        historyList.innerHTML = '<p>No previous symptoms history available.</p>';
+        } else {
+        // Create a map to store only the latest entry for each date
+        const uniqueEntries = new Map();
+        
+        symptomsHistory.forEach(entry => {
+            // This will automatically keep only the latest entry for each date
+            // since we're processing in sorted order (newest first)
+            if (!uniqueEntries.has(entry.date)) {
+                uniqueEntries.set(entry.date, entry);
+            }
+        });
+        
+        // Convert map back to array and display
+        const uniqueHistory = Array.from(uniqueEntries.values());
+        
+        uniqueHistory.forEach(entry => {
+            const item = document.createElement('div');
+            item.className = 'symptom-history-item';
+            
+            const symptomIds = typeof entry.symptoms === 'string' ? 
+                entry.symptoms.split(',').map(id => parseInt(id)) : 
+                entry.symptoms;
+                
+            const symptomDisplay = symptomIds.includes(13) ? 
+                "<span style='color: green;'>Everything is fine</span>" : 
+                getSymptomNames(symptomIds);
+            
+            item.innerHTML = `
+                <div class="symptom-history-date">${formatDate(entry.date)}</div>
+                <div class="symptom-history-symptoms">${symptomDisplay}</div>
+            `;
+            historyList.appendChild(item);
+        });
+        }
+
+    // Update expected symptoms for next 3 days
+        updateExpectedSymptoms();
+        }
+
+        // Update Additional Information Page
+        function updateAdditionalInfoPage(currentPhase) {
+            document.getElementById('additionalInfo').innerHTML = getAdditionalPhaseInfo(currentPhase);
+        }
+
+        // Show specific results page
+        function showResultsPage(pageName) {
+            // Hide all pages
+            document.getElementById('overviewPage').classList.add('hidden');
+            document.getElementById('advicePage').classList.add('hidden');
+            document.getElementById('historyPage').classList.add('hidden');
+            document.getElementById('additionalPage').classList.add('hidden');
+            
+            // Show selected page
+            document.getElementById(`${pageName}Page`).classList.remove('hidden');
+            
+            // Update navigation buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Logout
+        function logout() {
+            currentUser = null;
+            userDay = null;
+            userMonth = null;
+            userCycle = null;
+            window.tempPersonalID = null;
+            window.tempPassword = null;
+            selectedSymptoms = [];
+            
+            document.getElementById('symptomsSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            
+            // Clear all fields
+            document.getElementById('regPersonalID').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regDay').value = '';
+            document.getElementById('regMonth').value = '';
+            document.getElementById('regCycle').value = '';
+            document.getElementById('loginPersonalID').value = '';
+            document.getElementById('loginPassword').value = '';
+            
+            // Reset the button text
+            const completeBtn = document.querySelector('#cycleInfoSection button[onclick="saveUpdatedCycleInfo"]');
+            if (completeBtn) {
+                completeBtn.textContent = 'Complete Registration';
+                completeBtn.onclick = completeRegistration;
+            }
+        }
+
+        // === HELPER FUNCTIONS ===
+        
+        function getSymptomNames(symptomIds) {
+            if (!symptomIds || symptomIds.length === 0) return "None";
+            if (symptomIds.includes(13)) return "Everything is fine";
+            
+            const symptomMap = {
+                1: "Cramps", 2: "Tender breasts", 3: "Fatigue", 4: "Bloating",
+                5: "Headache", 6: "Acne", 7: "Backache", 8: "Nausea",
+                9: "Cravings", 10: "Insomnia", 11: "Constipation", 12: "Diarrhea"
+            };
+            
+            return symptomIds.map(id => symptomMap[id]).join(", ");
+        }
+        
+        function getSymptomDescription(symptomIds) {
+            if (!symptomIds || symptomIds.length === 0) return "no significant symptoms";
+            if (symptomIds.includes(13)) return "no discomfort today";
+            
+            const descriptions = {
+                1: "menstrual cramps", 2: "breast tenderness", 3: "fatigue", 4: "bloating",
+                5: "headaches", 6: "skin breakouts", 7: "back pain", 8: "nausea",
+                9: "food cravings", 10: "sleep issues", 11: "constipation", 12: "diarrhea"
+            };
+            
+            const symptomDescs = symptomIds.map(id => descriptions[id]);
+            return symptomDescs.join(", ");
+        }
+        
+        function calculateNextPeriod(day, month, cycle) {
+            const startDate = new Date(new Date().getFullYear(), month - 1, day);
+            const nextPeriod = new Date(startDate);
+            nextPeriod.setDate(nextPeriod.getDate() + cycle);
+            return nextPeriod.toDateString();
+        }
+        
+        // FIXED: formatDate function to show correct current date
+        function formatDate(dateString) {
+            // If it's today's date, use the actual current date
+            const today = new Date();
+            const inputDate = new Date(dateString);
+        
+            // Check if the date is today
+            if (inputDate.toDateString() === today.toDateString()) {
+                const options = { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                };
+                return today.toLocaleDateString(undefined, options);
+            }
+        
+            // For other dates, format normally
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            };
+            return inputDate.toLocaleDateString(undefined, options);
+        }
+        
+        function getCommonSymptomsWithPercentages(currentPhase, cycleDay) {
+            let symptomsHTML = `<div><strong>The common symptoms that you might experience on this day are:</strong></div><div style="margin-top: 10px;">`;
+            
+            // Determine which sub-range to use based on cycle day
+            let subRange = "";
+            
+            if (currentPhase === "Menstrual Phase") {
+                if (cycleDay <= 3) subRange = "1-3";
+                else subRange = "4-5";
+            } else if (currentPhase === "Follicular Phase") {
+                if (cycleDay <= 8) subRange = "6-8";
+                else if (cycleDay <= 11) subRange = "9-11";
+                else subRange = "12-13";
+            } else if (currentPhase === "Ovulation Phase") {
+                subRange = "14";
+            } else { // Luteal Phase
+                if (cycleDay <= 18) subRange = "15-18";
+                else if (cycleDay <= 22) subRange = "19-22";
+                else if (cycleDay <= 26) subRange = "23-26";
+                else subRange = "27-28";
+            }
+            
+            // Get symptoms for this sub-range
+            const symptoms = symptomData[currentPhase]?.[subRange] || [];
+            
+            if (symptoms.length === 0) {
+                symptomsHTML += `<div>No specific symptom data available for this day.</div>`;
+            } else {
+                symptoms.forEach(symptom => {
+                    symptomsHTML += `
+                        <div class="common-symptom-item">
+                            ${symptom.symptom}: <span class="symptom-percentage">${symptom.low}-${symptom.high}%</span>
+                        </div>
+                    `;
+                });
+            }
+            
+            symptomsHTML += `</div>`;
+            return symptomsHTML;
+        }
+        
+        function getGeneralSymptomsForPhase(phase) {
+            let generalSymptomsHTML = `<div class="general-symptoms-list">`;
+            
+            if (phase === "Menstrual Phase") {
+                generalSymptomsHTML += `
+                    <div class="general-symptom-item">Cramps</div>
+                    <div class="general-symptom-item">Fatigue</div>
+                    <div class="general-symptom-item">Lower back pain</div>
+                    <div class="general-symptom-item">Bloating</div>
+                    <div class="general-symptom-item">Diarrhea</div>
+                    <div class="general-symptom-item">Headache</div>
+                    <div class="general-symptom-item">Light bleeding towards end of this phase</div>
+                    <div class="general-symptom-item">Improved mood towards end of this phase</div>
+                `;
+            } else if (phase === "Follicular Phase") {
+                generalSymptomsHTML += `
+                    <div class="general-symptom-item">Energy rising</div>
+                    <div class="general-symptom-item">Mood stable / improving</div>
+                    <div class="general-symptom-item">Clearer skin</div>
+                    <div class="general-symptom-item">Increase in libido</div>
+                    <div class="general-symptom-item">Mild breast tenderness towards end of this phase</div>
+                    <div class="general-symptom-item">Better cognition / focus towards end of this phase</div>
+                    <div class="general-symptom-item">Increasing cervical mucus towards end of this phase</div>
+                `;
+            } else if (phase === "Ovulation Phase") {
+                generalSymptomsHTML += `
+                    <div class="general-symptom-item">Stretchy clear cervical mucus</div>
+                    <div class="general-symptom-item">Increased libido</div>
+                    <div class="general-symptom-item">Mittelschmerz (ovulation pain)</div>
+                    <div class="general-symptom-item">Mild nausea and breast tenderness towards the end of this phase</div>
+                `;
+            } else {
+                generalSymptomsHTML += `
+                    <div class="general-symptom-item">Breast tenderness</div>
+                    <div class="general-symptom-item">Fatigue</div>
+                    <div class="general-symptom-item">Bloating</div>
+                    <div class="general-symptom-item">Mood swings</div>
+                    <div class="general-symptom-item">Irritability</div>
+                    <div class="general-symptom-item">Headache</div>
+                    <div class="general-symptom-item">Cravings (carbs)</div>
+                    <div class="general-symptom-item">Anxiety</div>
+                    <div class="general-symptom-item">Lower back pain and Return of cramps (mild) towards end of this phase</div>
+                `;
+            }
+            
+            generalSymptomsHTML += `</div>`;
+            return generalSymptomsHTML;
+        }
+        
+        function getPersonalizedAdvice(phase, symptoms) {
+            let adviceHTML = "";
+            
+            // Phase-specific advice from the C code
+            if (phase === "Menstrual Phase") {
+                adviceHTML = `
+                    <div class="advice-item">
+                        <div class="advice-main">1) Increase magnesium-rich foods (nuts, seeds, dark chocolate)</div>
+                        <div class="advice-detail">- Relaxes uterine muscles → reduces cramps, headaches, lower back pain.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">2) Eat Iron + Vitamin C together</div>
+                        <div class="advice-detail">- Bleeding lowers iron → iron rebuilds blood; Vitamin C increases absorption.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">3) Consume Omega-3 fatty acids (flaxseed, chia seeds, fish oil)</div>
+                        <div class="advice-detail">- Anti-inflammatory → eases cramps, fatigue, and headaches.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">4) Prefer warm, easy-to-digest meals (soups, khichdi, steamed veggies)</div>
+                        <div class="advice-detail">- Supports digestion → reduces bloating, diarrhea, and fatigue.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">5) Avoid caffeine & high-salt foods</div>
+                        <div class="advice-detail">- Caffeine increases cramps; salt worsens bloating.</div>
+                    </div>
+                `;
+            } else if (phase === "Follicular Phase") {
+                adviceHTML = `
+                    <div class="advice-item">
+                        <div class="advice-main">1) Increase high-quality protein (eggs, dal, paneer)</div>
+                        <div class="advice-detail">- Supports rising estrogen & hormone production.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">2) Add B-vitamins (whole grains, bananas, nuts)</div>
+                        <div class="advice-detail">- Boosts energy, mood, and focus.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">3) Eat antioxidant-rich foods (berries, fruits, vegetables)</div>
+                        <div class="advice-detail">- Helps skin clarity and reduces inflammation.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">4) Include healthy fats (avocado, nuts, olive oil)</div>
+                        <div class="advice-detail">- Stabilizes mood and supports hormonal balance.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">5) Stay well hydrated</div>
+                        <div class="advice-detail">- Helps formation of cervical mucus and improves energy.</div>
+                    </div>
+                `;
+            } else if (phase === "Ovulation Phase") {
+                adviceHTML = `
+                    <div class="advice-item">
+                        <div class="advice-main">1) Consume zinc-rich foods (pumpkin seeds, legumes)</div>
+                        <div class="advice-detail">- Supports ovulation and hormone regulation.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">2) Take Vitamin B6 + Magnesium</div>
+                        <div class="advice-detail">- Reduces ovulation pain (mittelschmerz) and breast tenderness.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">3) Increase water intake</div>
+                        <div class="advice-detail">- Maintains cervical mucus quality and reduces discomfort.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">4) Eat antioxidant-rich foods (citrus, berries, green tea)</div>
+                        <div class="advice-detail">- Helps reduce nausea and oxidative stress.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">5) Prefer light meals</div>
+                        <div class="advice-detail">- Prevents bloating and digestive discomfort during ovulation.</div>
+                    </div>
+                `;
+            } else {
+                adviceHTML = `
+                    <div class="advice-item">
+                        <div class="advice-main">1) Increase magnesium intake (spinach, nuts, seeds)</div>
+                        <div class="advice-detail">- Reduces PMS symptoms like cramps, irritability, and fatigue.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">2) Take Vitamin B6 foods (banana, potatoes, chicken)</div>
+                        <div class="advice-detail">- Helps stabilize mood swings and reduces anxiety.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">3) Eat complex carbs (oats, brown rice, fruits)</div>
+                        <div class="advice-detail">- Helps control cravings and supports stable energy.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">4) Add Omega-3 fats (flaxseed, walnuts)</div>
+                        <div class="advice-detail">- Reduces breast tenderness and headaches.</div>
+                    </div>
+                    <div class="advice-item">
+                        <div class="advice-main">5) Avoid sugary & processed foods</div>
+                        <div class="advice-detail">- Prevents bloating, mood swings, and fatigue.</div>
+                    </div>
+                `;
+            }
+            
+            return adviceHTML;
+        }
+        
+        function updateExpectedSymptoms() {
+            const expectedContainer = document.getElementById('expectedSymptoms');
+            expectedContainer.innerHTML = '';
+            
+            // Calculate current cycle day
+            const currentDate = new Date();
+            let startDate = new Date(currentDate.getFullYear(), userMonth - 1, userDay);
+            
+            // If the start date is in the future (next year), adjust it
+            if (startDate > currentDate) {
+                startDate.setFullYear(startDate.getFullYear() - 1);
+            }
+            
+            const diffTime = currentDate - startDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const currentDay = (diffDays % userCycle) + 1;
+            
+            // Get current phase to determine which symptoms to show
+            let currentPhase;
+            if (currentDay <= 5) {
+                currentPhase = "Menstrual Phase";
+            } else if (currentDay <= 12) {
+                currentPhase = "Follicular Phase";
+            } else if (currentDay <= 16) {
+                currentPhase = "Ovulation Phase";
+            } else {
+                currentPhase = "Luteal Phase";
+            }
+            
+            // Get expected symptoms based on current phase (from C code)
+            let expectedSymptoms = [];
+            
+            if (currentPhase === "Menstrual Phase") {
+                if (currentDay <= 3) {
+                    expectedSymptoms = ["Cramps", "Fatigue", "Lower back pain", "Diarrhea/loose stools", "Headache", "Bloating"];
+                } else {
+                    expectedSymptoms = ["Cramps (reduced)", "Fatigue", "Light bleeding", "Mood improving"];
+                }
+            } else if (currentPhase === "Follicular Phase") {
+                if (currentDay <= 8) {
+                    expectedSymptoms = ["Energy rising", "Improved mood", "Clearer skin"];
+                } else if (currentDay <= 11) {
+                    expectedSymptoms = ["Slight increase in libido", "Mild breast tenderness", "Better cognition / focus"];
+                } else {
+                    expectedSymptoms = ["Increasing cervical mucus", "Increased libido", "Possible early ovulation signs"];
+                }
+            } else if (currentPhase === "Ovulation Phase") {
+                expectedSymptoms = ["Stretchy clear cervical mucus", "Libido spike", "Mittelschmerz (ovulation pain)", "Mild nausea", "Mild breast tenderness"];
+            } else { // Luteal Phase
+                if (currentDay <= 18) {
+                    expectedSymptoms = ["Fatigue", "Bloating", "Breast tenderness"];
+                } else if (currentDay <= 22) {
+                    expectedSymptoms = ["Irritability", "Mood swings", "Headache", "Cravings (carbs)"];
+                } else if (currentDay <= 26) {
+                    expectedSymptoms = ["Anxiety", "Heightened irritability", "Fatigue"];
+                } else {
+                    expectedSymptoms = ["Bloating", "Headache", "Lower back pain", "Return of cramps (mild)"];
+                }
+            }
+            
+            // Remove duplicates and limit to top symptoms
+            const uniqueSymptoms = [...new Set(expectedSymptoms)];
+            const topSymptoms = uniqueSymptoms.slice(0, 5); // Show top 5 symptoms
+            
+            // Create single line display
+            const symptomsLine = document.createElement('div');
+            symptomsLine.style.textAlign = 'center';
+            symptomsLine.style.padding = '15px';
+            symptomsLine.style.fontSize = '16px';
+            symptomsLine.style.fontWeight = 'bold';
+            symptomsLine.style.color = '#333';
+            
+            symptomsLine.innerHTML = `
+                <div style="margin-bottom: 10px; font-size: 14px; color: #666;">The most expected symptoms for the next 3 days are:</div>
+                <div>${topSymptoms.join(', ')}</div>
+            `;
+            
+            expectedContainer.appendChild(symptomsLine);
+        }
+        
+        function getAdditionalPhaseInfo(phase) {
+            let additionalInfoHTML = "";
+            
+            if (phase === "Menstrual Phase") {
+                additionalInfoHTML = `
+                    <div class="additional-info-header">--- More Information: Menstrual Phase ---</div>
+                    <div class="additional-info-item">• The period is the first phase of the menstrual cycle. Estrogen and progesterone levels drop near the end of the previous cycle if pregnancy does not occur.</div>
+                    <div class="additional-info-item">• During menstruation, the uterus sheds the lining called the endometrium. Old blood and tissue exit the body through the vagina.</div>
+                    <div class="additional-info-item">• Periods vary widely. The average bleeding time for adults is 4.5 to 6 days. Typical blood loss ranges from 5 ml to 80 ml.</div>
+                    <div class="additional-info-item">• Tracking your cycle helps identify patterns and improves predictions for your next cycle.</div>
+                    <div class="references">
+                        References:<br>
+                        1. Varney's Midwifery (2019)<br>
+                        2. The Lancet Child & Adolescent Health (2018)<br>
+                        3. FIGO Recommendations (2011)
+                    </div>
+                `;
+            } else if (phase === "Follicular Phase") {
+                additionalInfoHTML = `
+                    <div class="additional-info-header">--- More Information: Follicular Phase ---</div>
+                    <div class="additional-info-item">• The follicular phase begins right after menstruation and lasts until ovulation.</div>
+                    <div class="additional-info-item">• Follicle-stimulating hormone (FSH) rises, causing several follicles in the ovaries to mature. Usually, only one becomes dominant.</div>
+                    <div class="additional-info-item">• Estrogen levels steadily increase, improving mood, energy, focus, and skin quality.</div>
+                    <div class="additional-info-item">• The uterine lining (endometrium) starts to rebuild and thicken in preparation for possible pregnancy.</div>
+                    <div class="additional-info-item">• Exercise tolerance is higher during this phase, and strength or endurance workouts may feel easier.</div>
+                    <div class="references">
+                        References:<br>
+                        1. Guyton & Hall Textbook of Medical Physiology (2020)<br>
+                        2. Endocrine Reviews Journal (2017)<br>
+                        3. ACOG Clinical Guidelines (2019)
+                    </div>
+                `;
+            } else if (phase === "Ovulation Phase") {
+                additionalInfoHTML = `
+                    <div class="additional-info-header">--- More Information: Ovulation Phase ---</div>
+                    <div class="additional-info-item">• Ovulation occurs when a mature egg is released from the dominant ovarian follicle.</div>
+                    <div class="additional-info-item">• This usually happens about 10-16 days before the next period, depending on the cycle length.</div>
+                    <div class="additional-info-item">• Luteinizing hormone (LH) surges sharply, triggering the release of the egg within 24-36 hours.</div>
+                    <div class="additional-info-item">• Fertility is highest during this phase. Cervical mucus becomes clear, stretchy, and slippery (egg-white consistency).</div>
+                    <div class="additional-info-item">• Some individuals experience mild abdominal pain called 'mittelschmerz' on one side of the pelvis.</div>
+                    <div class="references">
+                        References:<br>
+                        1. Williams Gynecology (2020)<br>
+                        2. Human Reproduction Update Journal (2016)<br>
+                        3. ACOG Fertility Awareness Guidelines (2020)
+                    </div>
+                `;
+            } else {
+                additionalInfoHTML = `
+                    <div class="additional-info-header">--- More Information: Luteal Phase ---</div>
+                    <div class="additional-info-item">• The luteal phase occurs after ovulation and lasts until the next period begins.</div>
+                    <div class="additional-info-item">• Progesterone levels rise significantly, which can lead to symptoms known as premenstrual syndrome (PMS).</div>
+                    <div class="additional-info-item">• Common PMS symptoms include headaches, breast tenderness, bloating, water retention, irritability, anxiety, tearfulness, fatigue, acne, and food cravings.</div>
+                    <div class="additional-info-item">• Some individuals may also experience positive changes such as increased creativity, higher libido, or improved confidence.</div>
+                    <div class="additional-info-item">• Tracking symptoms can help identify patterns and understand what factors worsen or ease them, such as sleep, diet, and stress levels.</div>
+                    <div class="references">
+                        References:<br>
+                        1. ACOG - Premenstrual Syndrome (2015)<br>
+                        2. Gender Medicine Journal (2012)<br>
+                        3. Feminism & Psychology Journal (2013)<br>
+                        4. Women & Health Journal (2003)
+                    </div>
+                `;
+            }
+            
+            return additionalInfoHTML;
+        }
+
+        // === SYNC FUNCTIONS ===
+        function exportUserData() {
+            const allUsers = localStorage.getItem('menstrualTrackerUsers');
+            if (!allUsers) {
+                alert('No data found to export!');
+                return;
+            }
+            
+            const blob = new Blob([allUsers], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'menstrual-tracker-backup.json';
+            a.click();
+            
+            // Also show data as text for easy copying
+            prompt('📋 Copy this data to sync with other devices:', allUsers);
+        }
+
+        function importUserData(jsonData) {
+            try {
+                const users = JSON.parse(jsonData);
+                localStorage.setItem('menstrualTrackerUsers', JSON.stringify(users));
+                alert('✅ Data imported successfully! Please refresh the page to login with your existing accounts.');
+            } catch (error) {
+                alert('❌ Invalid data format. Please check the copied data.');
+            }
+        }
+
+        function promptForImport() {
+            const jsonData = prompt('📥 Paste the exported data from your other device:');
+            if (jsonData) {
+                importUserData(jsonData);
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('authSection').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
