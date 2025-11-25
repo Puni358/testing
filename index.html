@@ -280,6 +280,14 @@
             font-weight: bold;
             color: #ff69b4;
         }
+        .date-info {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 14px;
+            border-left: 4px solid #3498db;
+        }
     </style>
 </head>
 <body>
@@ -354,6 +362,15 @@
             </div>
             
             <h2>Almost Done! Set Up Your Cycle Information</h2>
+            
+            <!-- Date Information Box -->
+            <div class="date-info">
+                <strong>📅 Date Requirements:</strong>
+                <div>• Last period date must be within the last 35 days</div>
+                <div>• Cannot be a future date</div>
+                <div>• Example: If today is 25th Nov, valid dates are between 21st Oct - 25th Nov</div>
+            </div>
+            
             <div style="background: #f8f8f8; padding: 15px; border-radius: 5px; margin: 10px 0;">
                 <h3>Last Menstrual Period:</h3>
                 <div style="margin: 10px 0;">
@@ -632,43 +649,42 @@
         }
 
         // FIXED: Save symptoms function
-        // FIXED: Save symptoms function
         function saveSymptoms(personalID, symptoms) {
-        const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
-        const userData = allUsers[personalID];
+            const allUsers = JSON.parse(localStorage.getItem('menstrualTrackerUsers') || '{}');
+            const userData = allUsers[personalID];
 
-        if (userData) {
-        // Get today's date in YYYY-MM-DD format - USE ACTUAL CURRENT DATE
-        const today = new Date();
-        const todayString = today.toISOString().split('T')[0];
-        
-        // Initialize symptomsHistory if it doesn't exist
-        if (!userData.symptomsHistory) {
-            userData.symptomsHistory = [];
-        }
-        
-        // Check if we already have symptoms for today
-        const existingIndex = userData.symptomsHistory.findIndex(entry => entry.date === todayString);
-        
-        if (existingIndex > -1) {
-            // UPDATE existing entry for today
-            userData.symptomsHistory[existingIndex].symptoms = symptoms;
-        } else {
-            // Add new entry for today
-            userData.symptomsHistory.push({
-                date: todayString,
-                symptoms: symptoms
-            });
-        }
-        
-        // Sort by date (newest first)
-        userData.symptomsHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        allUsers[personalID] = userData;
-        localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
-        
-        console.log('Symptoms saved for date:', todayString);
-        }
+            if (userData) {
+                // Get today's date in YYYY-MM-DD format - USE ACTUAL CURRENT DATE
+                const today = new Date();
+                const todayString = today.toISOString().split('T')[0];
+                
+                // Initialize symptomsHistory if it doesn't exist
+                if (!userData.symptomsHistory) {
+                    userData.symptomsHistory = [];
+                }
+                
+                // Check if we already have symptoms for today
+                const existingIndex = userData.symptomsHistory.findIndex(entry => entry.date === todayString);
+                
+                if (existingIndex > -1) {
+                    // UPDATE existing entry for today
+                    userData.symptomsHistory[existingIndex].symptoms = symptoms;
+                } else {
+                    // Add new entry for today
+                    userData.symptomsHistory.push({
+                        date: todayString,
+                        symptoms: symptoms
+                    });
+                }
+                
+                // Sort by date (newest first)
+                userData.symptomsHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                allUsers[personalID] = userData;
+                localStorage.setItem('menstrualTrackerUsers', JSON.stringify(allUsers));
+                
+                console.log('Symptoms saved for date:', todayString);
+            }
         }
 
         function getSymptomsHistory(personalID) {
@@ -778,7 +794,7 @@
             document.getElementById('registerResult').textContent = '';
         }
 
-        // Step 2: Complete registration with cycle info
+        // Step 2: Complete registration with cycle info - WITH DATE VALIDATION
         function completeRegistration() {
             const day = parseInt(document.getElementById('regDay').value);
             const month = parseInt(document.getElementById('regMonth').value);
@@ -804,6 +820,25 @@
                 return;
             }
 
+            // === DATE VALIDATION: No future dates and no dates more than 35 days ago ===
+            const currentDate = new Date();
+            const enteredDate = new Date(currentDate.getFullYear(), month - 1, day);
+            
+            // Check if date is in future
+            if (enteredDate > currentDate) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Last period date cannot be in the future';
+                return;
+            }
+            
+            // Check if date is more than 35 days ago (max cycle length)
+            const thirtyFiveDaysAgo = new Date();
+            thirtyFiveDaysAgo.setDate(thirtyFiveDaysAgo.getDate() - 35);
+            
+            if (enteredDate < thirtyFiveDaysAgo) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Last period date cannot be more than 35 days ago. Please enter a more recent date.';
+                return;
+            }
+
             try {
                 // Save user data to localStorage
                 saveUserData(window.tempPersonalID, window.tempPassword, day, month, cycle);
@@ -826,7 +861,7 @@
             }
         }
 
-        // Update cycle information
+        // Update cycle information - WITH DATE VALIDATION
         function updateCycleInfo() {
             if (!currentUser) return;
             
@@ -850,7 +885,7 @@
             completeBtn.onclick = saveUpdatedCycleInfo;
         }
 
-        // Save updated cycle information
+        // Save updated cycle information - WITH DATE VALIDATION
         function saveUpdatedCycleInfo() {
             const day = parseInt(document.getElementById('regDay').value);
             const month = parseInt(document.getElementById('regMonth').value);
@@ -873,6 +908,25 @@
 
             if (cycle < 21 || cycle > 35) {
                 document.getElementById('cycleInfoResult').textContent = 'Cycle length must be between 21-35 days';
+                return;
+            }
+
+            // === DATE VALIDATION: No future dates and no dates more than 35 days ago ===
+            const currentDate = new Date();
+            const enteredDate = new Date(currentDate.getFullYear(), month - 1, day);
+            
+            // Check if date is in future
+            if (enteredDate > currentDate) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Last period date cannot be in the future';
+                return;
+            }
+            
+            // Check if date is more than 35 days ago (max cycle length)
+            const thirtyFiveDaysAgo = new Date();
+            thirtyFiveDaysAgo.setDate(thirtyFiveDaysAgo.getDate() - 35);
+            
+            if (enteredDate < thirtyFiveDaysAgo) {
+                document.getElementById('cycleInfoResult').textContent = '❌ Last period date cannot be more than 35 days ago. Please enter a more recent date.';
                 return;
             }
 
@@ -1136,73 +1190,72 @@
         }
 
         // FIXED: Update History Page function
-        // FIXED: Update History Page function
         function updateHistoryPage() {
-    // Get symptoms history
-        const symptomsHistory = getSymptomsHistory(currentUser);
+            // Get symptoms history
+            const symptomsHistory = getSymptomsHistory(currentUser);
 
-    // Update today's symptoms - Use ACTUAL current date
-        const today = new Date();
-        const todayFormatted = formatDate(today.toISOString().split('T')[0]);
-    
-        if (selectedSymptoms.length > 0) {
-        if (selectedSymptoms.includes(13)) {
-            document.getElementById('todaySymptoms').innerHTML = `
-                <div style="color: green; font-weight: bold;">
-                    ${todayFormatted}: Everything is fine
-                </div>
-                <div style="margin-top: 10px; color: #28a745;">
-                    ✅ Your symptoms have been saved for AI training!
-                </div>
-            `;
-        } else {
-            const symptomNames = getSymptomNames(selectedSymptoms);
-            document.getElementById('todaySymptoms').innerHTML = `
-                <div style="font-weight: bold;">
-                    ${todayFormatted}: 
-                </div>
-                <div style="margin-top: 10px;">
-                    ${symptomNames.split(', ').map(symptom => `<div>- ${symptom}</div>`).join('')}
-                </div>
-                <div style="margin-top: 10px; color: #28a745;">
-                    ✅ Your symptoms have been saved for AI training!
-                </div>
-            `;
-        }
-        } else {
-        document.getElementById('todaySymptoms').textContent = `No symptoms recorded for ${todayFormatted}.`;
-        }
+            // Update today's symptoms - Use ACTUAL current date
+            const today = new Date();
+            const todayFormatted = formatDate(today.toISOString().split('T')[0]);
+        
+            if (selectedSymptoms.length > 0) {
+                if (selectedSymptoms.includes(13)) {
+                    document.getElementById('todaySymptoms').innerHTML = `
+                        <div style="color: green; font-weight: bold;">
+                            ${todayFormatted}: Everything is fine
+                        </div>
+                        <div style="margin-top: 10px; color: #28a745;">
+                            ✅ Your symptoms have been saved for AI training!
+                        </div>
+                    `;
+                } else {
+                    const symptomNames = getSymptomNames(selectedSymptoms);
+                    document.getElementById('todaySymptoms').innerHTML = `
+                        <div style="font-weight: bold;">
+                            ${todayFormatted}: 
+                        </div>
+                        <div style="margin-top: 10px;">
+                            ${symptomNames.split(', ').map(symptom => `<div>- ${symptom}</div>`).join('')}
+                        </div>
+                        <div style="margin-top: 10px; color: #28a745;">
+                            ✅ Your symptoms have been saved for AI training!
+                        </div>
+                    `;
+                }
+            } else {
+                document.getElementById('todaySymptoms').textContent = `No symptoms recorded for ${todayFormatted}.`;
+            }
 
-    // Update symptoms history list - Show previous entries from storage
-        const historyList = document.getElementById('symptomsHistoryList');
-        historyList.innerHTML = '';
+            // Update symptoms history list - Show previous entries from storage
+            const historyList = document.getElementById('symptomsHistoryList');
+            historyList.innerHTML = '';
 
-        if (symptomsHistory.length === 0) {
-        historyList.innerHTML = '<p>No previous symptoms history available.</p>';
-        } else {
-        // Show all entries
-        symptomsHistory.forEach(entry => {
-            const item = document.createElement('div');
-            item.className = 'symptom-history-item';
-            
-            const symptomIds = typeof entry.symptoms === 'string' ? 
-                entry.symptoms.split(',').map(id => parseInt(id)) : 
-                entry.symptoms;
-                
-            const symptomDisplay = symptomIds.includes(13) ? 
-                "<span style='color: green;'>Everything is fine</span>" : 
-                getSymptomNames(symptomIds);
-            
-            item.innerHTML = `
-                <div class="symptom-history-date">${formatDate(entry.date)}</div>
-                <div class="symptom-history-symptoms">${symptomDisplay}</div>
-            `;
-            historyList.appendChild(item);
-        });
-        }
+            if (symptomsHistory.length === 0) {
+                historyList.innerHTML = '<p>No previous symptoms history available.</p>';
+            } else {
+                // Show all entries
+                symptomsHistory.forEach(entry => {
+                    const item = document.createElement('div');
+                    item.className = 'symptom-history-item';
+                    
+                    const symptomIds = typeof entry.symptoms === 'string' ? 
+                        entry.symptoms.split(',').map(id => parseInt(id)) : 
+                        entry.symptoms;
+                        
+                    const symptomDisplay = symptomIds.includes(13) ? 
+                        "<span style='color: green;'>Everything is fine</span>" : 
+                        getSymptomNames(symptomIds);
+                    
+                    item.innerHTML = `
+                        <div class="symptom-history-date">${formatDate(entry.date)}</div>
+                        <div class="symptom-history-symptoms">${symptomDisplay}</div>
+                    `;
+                    historyList.appendChild(item);
+                });
+            }
 
-    // Update expected symptoms for next 3 days
-        updateExpectedSymptoms();
+            // Update expected symptoms for next 3 days
+            updateExpectedSymptoms();
         }
 
         // Update Additional Information Page
@@ -1295,30 +1348,29 @@
             return nextPeriod.toDateString();
         }
         
-        // FIXED: formatDate function to show full date
-// FIXED: formatDate function to show correct current date
+        // FIXED: formatDate function to show correct current date
         function formatDate(dateString) {
-    // If it's today's date, use the actual current date
-        const today = new Date();
-        const inputDate = new Date(dateString);
-    
-    // Check if the date is today
-        if (inputDate.toDateString() === today.toDateString()) {
-        const options = { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-        };
-        return today.toLocaleDateString(undefined, options);
-        }
-    
-    // For other dates, format normally
-        const options = { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-        };
-        return inputDate.toLocaleDateString(undefined, options);
+            // If it's today's date, use the actual current date
+            const today = new Date();
+            const inputDate = new Date(dateString);
+        
+            // Check if the date is today
+            if (inputDate.toDateString() === today.toDateString()) {
+                const options = { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                };
+                return today.toLocaleDateString(undefined, options);
+            }
+        
+            // For other dates, format normally
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            };
+            return inputDate.toLocaleDateString(undefined, options);
         }
         
         function getCommonSymptomsWithPercentages(currentPhase, cycleDay) {
