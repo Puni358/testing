@@ -829,7 +829,7 @@
             thirtyFiveDaysAgo.setDate(thirtyFiveDaysAgo.getDate() - 35);
             
             if (enteredDate < thirtyFiveDaysAgo) {
-                document.getElementById('cycleInfoResult').textContent = '❌ Last period date cannot be more than 35 days ago. Please enter a more recent date.';
+                document.getElementById('cycleInfoResult').textContent = '❌ This may indicate an irregular cycle. Please consult a doctor.';
                 return;
             }
 
