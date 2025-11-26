@@ -288,6 +288,152 @@
             font-size: 14px;
             border-left: 4px solid #3498db;
         }
+        
+        /* Calendar button styles */
+        .calendar-btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            background-color: #007bff; /* Bright blue */;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .calendar-btn:hover {
+            background-color: #6f18b6;
+        }
+        /* Custom date picker colors */
+        input[type="date"] {
+        background: #e6f2ff; /* Light blue background */
+        }
+
+        input[type="date"]:focus {
+        border-color: #6f42c1;
+        box-shadow: 0 0 0 2px rgba(111, 66, 193, 0.25);
+        }
+
+/* For the calendar popup itself (limited browser support) */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: hue-rotate(250deg); /* Makes the icon purple-ish */
+        }
+        /* Custom Calendar Styles */
+.custom-calendar {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 15px 0;
+    border: 1px solid #e0e0e0;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-weight: bold;
+    color: #666;
+    padding: 8px;
+    font-size: 12px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.calendar-day {
+    text-align: center;
+    padding: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #eee;
+    min-height: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.calendar-day:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.05);
+}
+
+.calendar-day.menstrual {
+    background-color: #ffd7cd;  /* Darker pink/red */
+    border-color: #f50909;      /* Darker red border */
+    color: #ff0000;             /* Darker red text */
+    font-weight: bold;
+}
+
+.calendar-day.fertile {
+    background-color: #e3f2fd;
+    border-color: #3498db;
+    color: #2980b9;
+    font-weight: bold;
+}
+
+.calendar-day.today {
+    border: 2px solid #ff69b4;
+    font-weight: bold;
+    background-color: #fff0f5;
+}
+
+.calendar-day.empty {
+    background-color: #f8f9fa;
+    cursor: default;
+    border: none;
+}
+
+.calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+}
+
+.legend-menstrual {
+    background-color: #ffebee;
+    border: 1px solid #e74c3c;
+}
+
+.legend-fertile {
+    background-color: #e3f2fd;
+    border: 1px solid #3498db;
+}
+
+.legend-today {
+    background-color: white;
+    border: 2px solid #ff69b4;
+}
     </style>
 </head>
 <body>
@@ -386,7 +532,11 @@
                 <div style="margin: 10px 0;">
                     <input type="number" id="regDay" placeholder="Start Day (1-31)" min="1" max="31" style="width: 140px;">
                     <input type="number" id="regMonth" placeholder="Start Month (1-12)" min="1" max="12" style="width: 140px;">
+                    <!-- CALENDAR BUTTON ADDED HERE -->
+                    <button class="calendar-btn" onclick="openCalendar()">📅 Calendar</button>
                 </div>
+                <!-- Hidden date picker -->
+                <input type="date" id="datePicker" style="display: none;" onchange="updateDayMonth()">
                 <div style="margin: 10px 0;">
                     <input type="number" id="regCycle" placeholder="Cycle Length (21-35 days)" min="21" max="35" style="width: 200px;">
                 </div>
@@ -449,28 +599,36 @@
             
             <!-- Page 1: Cycle Overview -->
             <div id="overviewPage" class="results-page">
-                <div class="phase-indicator">
-                    <div class="phase-color" id="phaseColorIndicator"></div>
-                    <div>
-                        <h3 id="currentPhase">Current Phase</h3>
-                        <div class="cycle-day" id="cycleDayIndicator">Day 1</div>
-                    </div>
-                </div>
-                
-                <div class="info-card">
-                    <h4>Today's Summary</h4>
-                    <div id="overviewSummary">Loading summary...</div>
-                </div>
-                
-                <div class="info-card">
-                    <h4>Key Information</h4>
-                    <div id="keyInfo">Loading key information...</div>
-                </div>
-                
-                <div class="info-card">
-                    <h4>Next Expected Period</h4>
-                    <div id="nextPeriod">Calculating...</div>
-                </div>
+            <div class="phase-indicator">
+            <div class="phase-color" id="phaseColorIndicator"></div>
+            <div>
+                <h3 id="currentPhase">Current Phase</h3>
+            <div class="cycle-day" id="cycleDayIndicator">Day 1</div>
+            </div>
+            </div>
+    
+            <!-- Cycle Calendar - Always Visible -->
+            <div class="info-card">
+                <h4>📅 Your Cycle Calendar</h4>
+            <div id="cycleCalendar" class="custom-calendar">
+            <!-- Calendar will be generated here automatically -->
+            </div>
+            </div>
+    
+            <div class="info-card">
+                <h4>Today's Summary</h4>
+            <div id="overviewSummary">Loading summary...</div>
+            </div>
+    
+            <div class="info-card">
+                <h4>Key Information</h4>
+            <div id="keyInfo">Loading key information...</div>
+             </div>
+    
+            <div class="info-card">
+                 <h4>Next Expected Period</h4>
+             <div id="nextPeriod">Calculating...</div>
+             </div>
             </div>
             
             <!-- Page 2: Advice & General Symptoms -->
@@ -606,6 +764,28 @@
             }
         };
 
+        // Calendar functions
+        function openCalendar() {
+            const datePicker = document.getElementById('datePicker');
+            datePicker.style.display = 'block';
+            datePicker.showPicker();
+        }
+        
+        function updateDayMonth() {
+            const datePicker = document.getElementById('datePicker');
+            const dayInput = document.getElementById('regDay');
+            const monthInput = document.getElementById('regMonth');
+            
+            if (datePicker.value) {
+                const selectedDate = new Date(datePicker.value);
+                dayInput.value = selectedDate.getDate();
+                monthInput.value = selectedDate.getMonth() + 1; // Months are 0-indexed
+                
+                // Hide the date picker after selection
+                datePicker.style.display = 'none';
+            }
+        }
+
         // Enhanced storage functions
         function saveUserData(personalID, password, day, month, cycle) {
             const userData = {
@@ -719,7 +899,127 @@
             
             return [];
         }
+        // Calendar functions
+function generateCycleCalendar() {
+    if (!currentUser) return;
+    
+    const calendar = document.getElementById('cycleCalendar');
+    const currentDate = new Date();
+    
+    // Calculate cycle information
+    let startDate = new Date(currentDate.getFullYear(), userMonth - 1, userDay);
+    if (startDate > currentDate) {
+        startDate.setFullYear(startDate.getFullYear() - 1);
+    }
+    
+    const diffTime = currentDate - startDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const currentDay = (diffDays % userCycle) + 1;
+    
+    // Get current month info
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    
+    // Generate calendar HTML
+    let calendarHTML = `
+        <div class="calendar-header">
+            <h4 style="margin: 0; color: #333;">${getMonthName(currentMonth)} ${currentYear}</h4>
+            <small style="color: #666;">Your current cycle: Day ${currentDay}</small>
+        </div>
+        <div class="calendar-grid">
+    `;
+    
+    // Day headers
+    const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    dayHeaders.forEach(day => {
+        calendarHTML += `<div class="calendar-day-header">${day}</div>`;
+    });
+    
+    // Get first day of month and number of days
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    // Empty days before first day of month
+    for (let i = 0; i < firstDay; i++) {
+        calendarHTML += `<div class="calendar-day empty"></div>`;
+    }
+    
+    // Calendar days
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dayOfMonth = date.getDate();
+        
+        // Calculate cycle day for this date
+        const dayDiff = Math.floor((date - startDate) / (1000 * 60 * 60 * 24));
+        const cycleDay = (dayDiff % userCycle) + 1;
+        
+        let dayClass = 'calendar-day';
+        let tooltip = '';
+        
+        // Check if this date is in the current cycle
+        if (dayDiff >= 0 && cycleDay <= userCycle) {
+            // Menstrual phase (days 1-5)
+            if (cycleDay <= 5) {
+                dayClass += ' menstrual';
+                tooltip = `Menstrual Phase - Day ${cycleDay}`;
+            }
+            // Fertile day (day 14)
+            // Fertile window (days 13-15)
+            else if (cycleDay >= 13 && cycleDay <= 15) {
+            dayClass += ' fertile';
+            tooltip = `Fertile Window - Day ${cycleDay}`;
+            } else {
+                tooltip = `Day ${cycleDay} of cycle`;
+            }
+        }
+        
+        // Highlight today
+        if (dayOfMonth === currentDate.getDate() && 
+            currentMonth === currentDate.getMonth() && 
+            currentYear === currentDate.getFullYear()) {
+            dayClass += ' today';
+            if (tooltip) tooltip += ' (Today)';
+            else tooltip = 'Today';
+        }
+        
+        let dayContent = dayOfMonth;
+        if (dayDiff >= 0 && cycleDay <= userCycle) {
+            dayContent = `<div style="font-weight: bold;">${dayOfMonth}</div><small style="font-size:9px;color:#666;">${cycleDay}</small>`;
+        }
+        
+        calendarHTML += `<div class="${dayClass}" title="${tooltip}">${dayContent}</div>`;
+    }
+    
+    calendarHTML += `</div>`;
+    
+    // Add legend
+    calendarHTML += `
+        <div class="calendar-legend">
+            <div class="legend-item">
+                <div class="legend-color legend-menstrual"></div>
+                <span>Menstrual Phase</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-fertile"></div>
+                <span>Fertile Day</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color legend-today"></div>
+                <span>Today</span>
+            </div>
+        </div>
+    `;
+    
+    calendar.innerHTML = calendarHTML;
+}
 
+function getMonthName(monthIndex) {
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[monthIndex];
+}
         // Enhanced Personal ID validation function
         function validatePersonalID(personalID) {
             // Check minimum length
@@ -1203,24 +1503,27 @@
 
         // Update Overview Page
         function updateOverviewPage(currentPhase, cycleDay, phaseColor) {
-            // Update UI elements
-            document.getElementById('cycleDayIndicator').textContent = `Day ${cycleDay}`;
-            document.getElementById('currentPhase').textContent = currentPhase;
-            document.getElementById('phaseColorIndicator').className = `phase-color ${phaseColor}`;
-            
-            // Update summary
-            document.getElementById('overviewSummary').innerHTML = `
-                <p>You are currently in the <strong>${currentPhase}</strong> of your cycle.</p>
-                <p>Based on your symptoms, you may experience: ${getSymptomDescription(selectedSymptoms)}</p>
-            `;
-            
-            // Update key information with COMMON symptoms with percentages
-            document.getElementById('keyInfo').innerHTML = getCommonSymptomsWithPercentages(currentPhase, cycleDay);
-            
-            // Calculate next period
-            const nextPeriodDate = calculateNextPeriod(userDay, userMonth, userCycle);
-            document.getElementById('nextPeriod').textContent = nextPeriodDate;
-        }
+    // Update UI elements
+    document.getElementById('cycleDayIndicator').textContent = `Day ${cycleDay}`;
+    document.getElementById('currentPhase').textContent = currentPhase;
+    document.getElementById('phaseColorIndicator').className = `phase-color ${phaseColor}`;
+    
+    // Generate the calendar
+    generateCycleCalendar();
+    
+    // Update summary
+    document.getElementById('overviewSummary').innerHTML = `
+        <p>You are currently in the <strong>${currentPhase}</strong> of your cycle.</p>
+        <p>Based on your symptoms, you may experience: ${getSymptomDescription(selectedSymptoms)}</p>
+    `;
+    
+    // Update key information with COMMON symptoms with percentages
+    document.getElementById('keyInfo').innerHTML = getCommonSymptomsWithPercentages(currentPhase, cycleDay);
+    
+    // Calculate next period
+    const nextPeriodDate = calculateNextPeriod(userDay, userMonth, userCycle);
+    document.getElementById('nextPeriod').textContent = nextPeriodDate;
+}
 
         // Update Advice Page
         function updateAdvicePage(currentPhase, cycleDay) {
